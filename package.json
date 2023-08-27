@@ -1,0 +1,28 @@
+{
+    "name": "animelatinohd",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start -H 0.0.0.0 -p ${PORT:-8080}",
+        "export": "next build && next export && mv out _static"
+    },
+    "dependencies": {
+        "axios": "^0.21.1",
+        "disqus-react": "^1.0.10",
+        "eslint-config-next": "^13.4.19",
+        "moment": "^2.29.1",
+        "next": "^13.4.19",
+        "next-images": "^1.6.2",
+        "nprogress": "^0.2.0",
+        "react": "^18.2.0",
+        "react-device-detect": "^1.17.0",
+        "react-dom": "^18.2.0",
+        "react-ga": "^3.3.0",
+        "react-icons": "^4.1.0",
+        "react-iframe": "^1.8.0",
+        "react-modal": "^3.12.1",
+        "styled-components": "^5.3.3"
+    }
+}
