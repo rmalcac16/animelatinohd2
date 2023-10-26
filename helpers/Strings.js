@@ -1,5 +1,10 @@
 import moment from 'moment';
+import 'moment/locale/es';
 moment.locale('es');
+
+export const getFromNow = (date) => {
+    return moment(date).fromNow();
+};
 
 export const getTypeAnime = (type) => {
     switch (type.toLowerCase()) {
@@ -12,10 +17,6 @@ export const getTypeAnime = (type) => {
         default:
             return type;
     }
-};
-
-export const getFromNow = (date) => {
-    return moment(date).fromNow();
 };
 
 export const getStatusAnime = (status) => {

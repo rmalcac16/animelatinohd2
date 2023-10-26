@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import Head from 'next/head';
-import { api } from '../lib/api';
 import Layout from '../components/Layout';
 import ListEpisodes from '../components/ListEpisodes';
-
+import { api } from '../lib/api';
 import styles from '../styles/Home.module.css';
 
 export default class index extends Component {
@@ -54,19 +53,17 @@ export default class index extends Component {
 
 export async function getStaticProps() {
     try {
-        const res = await api.get(`releases`);
+        const res = await api.get(`releases2`);
         return {
             props: {
                 releases: res.data,
             },
-            revalidate: 60,
         };
     } catch (error) {
         return {
             props: {
                 releases: [],
             },
-            revalidate: 1,
         };
     }
 }

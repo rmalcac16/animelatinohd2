@@ -27,17 +27,28 @@ class MyDocument extends Document {
                         as="font"
                         crossOrigin=""
                     />
-                    <script
-                        async
-                        src="https://arc.io/widget.min.js#R2yjvhvV"
-                    ></script>
-                    <script src="/disableClick.js"></script>
+                    <link
+                        rel="stylesheet"
+                        href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css"
+                    />
                 </Head>
-                <body className={'mob_ad'}>
+                <body>
                     <Main />
                     <NextScript />
-                    <script src="/popAds.js"></script>
-                    <script id="chatBroEmbedCode" src="/chat.js"></script>
+                    {process.env.NODE_ENV !== 'development' && (
+                        <>
+                            <script src="/popAds.js"></script>
+                            <script
+                                id="chatBroEmbedCode"
+                                src="/chat.js"
+                            ></script>
+                            <script src="/disableClick.js"></script>
+                            <script
+                                async
+                                src="https://arc.io/widget.min.js#R2yjvhvV"
+                            ></script>
+                        </>
+                    )}
                 </body>
             </Html>
         );

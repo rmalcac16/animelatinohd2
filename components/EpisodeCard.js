@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
     bannerAnime,
     posterAnime,
@@ -22,45 +21,43 @@ export default class EpisodeCard extends Component {
             <div className={styles.container}>
                 <div className={styles.holder}>
                     <div className={styles.overlay}>
+                        {episode?.languaje == 1 && (
+                            <span className={styles.label}>Español Latino</span>
+                        )}
+
                         <span className={styles.time} suppressHydrationWarning>
                             {getFromNow(episode?.created_at)}
                         </span>
                         <Link
-                            href={slugEpisode(
-                                episode?.anime?.slug,
-                                episode?.number
-                            )}
+                            href={slugEpisode(episode?.slug, episode?.number)}
                             className={styles.play}
-                            alt={`${episode?.anime?.name} ${episode?.number}`}
-                            title={`${episode?.anime?.name} ${episode?.number}`}
+                            alt={`${episode?.name} ${episode?.number}`}
+                            title={`${episode?.name} ${episode?.number}`}
                         >
                             <svg viewBox="0 0 24 24">
                                 <path d="M8,5.14V19.14L19,12.14L8,5.14Z"></path>
                             </svg>
                         </Link>
                         <Link
-                            href={slugAnime(episode?.anime?.slug)}
+                            href={slugAnime(episode?.slug)}
                             className={styles.cover}
-                            alt={episode?.anime?.name}
-                            title={episode?.anime?.name}
+                            alt={episode?.name}
+                            title={episode?.name}
                         >
                             <img
-                                alt={episode?.anime?.name}
+                                alt={episode?.name}
                                 height={73}
                                 width={53}
                                 quality={95}
                                 layout="intrinsic"
                                 loading={'lazy'}
-                                src={posterAnime(
-                                    'w154',
-                                    episode?.anime?.poster
-                                )}
+                                src={posterAnime('w154', episode?.poster)}
                             />
                         </Link>
                     </div>
                     <img
-                        alt={`${episode?.anime?.name} ${episode?.number}`}
-                        src={bannerAnime('w300', episode?.anime?.banner)}
+                        alt={`${episode?.name} ${episode?.number}`}
+                        src={bannerAnime('w300', episode?.banner)}
                         layout="responsive"
                         width="auto"
                         height="auto"
@@ -77,17 +74,12 @@ export default class EpisodeCard extends Component {
                 </div>
                 <div className={styles.text}>
                     <Link
-                        href={slugEpisode(
-                            episode?.anime?.slug,
-                            episode?.number
-                        )}
+                        href={slugEpisode(episode?.slug, episode?.number)}
                         className={styles.title}
-                        alt={`${episode?.anime?.name} ${episode?.number}`}
-                        title={`${episode?.anime?.name} ${episode?.number}`}
+                        alt={`${episode?.name} ${episode?.number}`}
+                        title={`${episode?.name} ${episode?.number}`}
                     >
-                        <div className={styles.limit}>
-                            {episode?.anime?.name}
-                        </div>
+                        <div className={styles.limit}>{episode?.name}</div>
                         <span
                             className={styles.episode}
                         >{`Ep. ${episode?.number}`}</span>
