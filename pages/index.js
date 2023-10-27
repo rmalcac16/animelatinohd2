@@ -58,12 +58,14 @@ export async function getStaticProps() {
             props: {
                 releases: res.data,
             },
+            revalidate: 10,
         };
     } catch (error) {
         return {
             props: {
                 releases: [],
             },
+           revalidate: 10, 
         };
     }
 }
