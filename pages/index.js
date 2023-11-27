@@ -51,7 +51,7 @@ export default class index extends Component {
     }
 }
 
-export async function getStaticProps() {
+export async function getServerSideProps() {
     try {
         const res = await api.get(`releases2`);
         return {
@@ -64,7 +64,6 @@ export async function getStaticProps() {
             props: {
                 releases: [],
             },
-            revalidate: 1,
         };
     }
 }
