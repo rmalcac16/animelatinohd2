@@ -28,7 +28,7 @@ export default class AnimeItemSearch extends Component {
                         quality={95}
                         layout={'intrinsic'}
                         loading={'lazy'}
-                        src={posterAnime(data?.poster)}
+                        src={posterAnime('w154', data?.poster)}
                     />
                 </div>
                 <div className={styles.content}>
