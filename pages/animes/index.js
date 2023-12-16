@@ -8,50 +8,27 @@ import { filterAnime } from '../../helpers/Functions';
 
 import styles from '../../styles/Animes.module.css';
 
-class index extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            filter: this.props.router.query,
-        };
-    }
+const Index = ({ data, query }) => {
+    const handleChange = async (e) => {
+        const { name, value } = e.target;
+        const queryParams = { ...query, [name]: value, page: 1 };
+        const queryString = new URLSearchParams(queryParams).toString();
 
-    handleChange = (e) => {
-        const { router } = this.props;
-        const { filter } = this.state;
-        this.setState(
-            {
-                filter: {
-                    ...filter,
-                    [e.target.name]: e.target.value,
-                },
-            },
-            () =>
-                router.push({
-                    query: {
-                        ...router.query,
-                        page: 1,
-                        [e.target.name]: e.target.value,
-                    },
-                })
-        );
+        window.location.href = `/animes?${queryString}`;
     };
 
-    changePage = (type) => {
-        const { data, router } = this.props;
-        router.push({
-            query: {
-                ...router.query,
-                page:
-                    type === 'next'
-                        ? parseInt(data?.current_page + 1)
-                        : parseInt(data?.current_page - 1),
-            },
-        });
+    const changePage = async (type) => {
+        const newPage =
+            type === 'next'
+                ? parseInt(data?.current_page) + 1
+                : parseInt(data?.current_page) - 1;
+        const queryParams = { ...query, page: newPage };
+        const queryString = new URLSearchParams(queryParams).toString();
+
+        window.location.href = `/animes?${queryString}`;
     };
 
-    filterAnimes = () => {
-        const { filter } = this.state;
+    const filterAnimes = () => {
         return (
             <div className={styles.filter}>
                 <div className={styles.ListTypes}>
@@ -59,9 +36,9 @@ class index extends Component {
                         <label htmlFor={'type'}>Tipo</label>
                         <select
                             name={'type'}
-                            value={filter?.type}
+                            value={query?.type}
                             id={'type'}
-                            onChange={this.handleChange}
+                            onChange={handleChange}
                         >
                             <option value="">Todos</option>
                             {filterAnime()?.types?.map((item, idx) => (
@@ -75,9 +52,9 @@ class index extends Component {
                         <label htmlFor={'status'}>Estado</label>
                         <select
                             name={'status'}
-                            value={filter?.status}
+                            value={query?.status}
                             id={'status'}
-                            onChange={this.handleChange}
+                            onChange={handleChange}
                         >
                             <option value="">Todos</option>
                             {filterAnime()?.status?.map((item, idx) => (
@@ -91,9 +68,9 @@ class index extends Component {
                         <label htmlFor={'year'}>Año</label>
                         <select
                             name={'year'}
-                            value={filter?.year}
+                            value={query?.year}
                             id={'year'}
-                            onChange={this.handleChange}
+                            onChange={handleChange}
                         >
                             <option value="">Todos</option>
                             {filterAnime()?.years?.map((item, idx) => (
@@ -107,9 +84,9 @@ class index extends Component {
                         <label htmlFor={'genre'}>Genero</label>
                         <select
                             name={'genre'}
-                            value={filter?.genre}
+                            value={query?.genre}
                             id={'genre'}
-                            onChange={this.handleChange}
+                            onChange={handleChange}
                         >
                             <option value="">Todos</option>
                             {filterAnime()?.genres?.map((item, idx) => (
@@ -124,14 +101,13 @@ class index extends Component {
         );
     };
 
-    paginationAnimes = () => {
-        const { data } = this.props;
+    const paginationAnimes = () => {
         return (
             <div className={styles.paginate}>
                 {data?.prev_page_url && (
                     <a
                         className={styles.item}
-                        onClick={() => this.changePage('prev')}
+                        onClick={() => changePage('prev')}
                     >
                         <svg viewBox="0 0 24 24">
                             <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"></path>
@@ -146,7 +122,7 @@ class index extends Component {
                 {data?.next_page_url && (
                     <a
                         className={styles.item}
-                        onClick={() => this.changePage('next')}
+                        onClick={() => changePage('next')}
                     >
                         <svg viewBox="0 0 24 24">
                             <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"></path>
@@ -157,70 +133,66 @@ class index extends Component {
         );
     };
 
-    render() {
-        const { data } = this.props;
-        return (
-            <Layout>
-                <Head>
-                    <title>{`Lista de animes • ${process.env.NAME}`}</title>
-                    <meta
-                        name="description"
-                        content={`Anime Online Gratis, mira los últimos capitulos de los animes del momento sin ninguna restriccion subtitulados al español latino en ${process.env.NAME}`}
-                    />
-                    <link rel="canonical" href={`${process.env.URL}/animes`} />
-                    <meta
-                        name="og:title"
-                        content={`Lista de animes • ${process.env.NAME}`}
-                    />
-                    <meta
-                        name="og:description"
-                        content={`Anime Online Gratis, mira los últimos capitulos de los animes del momento sin ninguna restriccion subtitulados al español latino en ${process.env.NAME}`}
-                    />
-                    <meta name="og:url" content={`${process.env.URL}/animes`} />
-                    <meta name="og:locale" content="es_LA" />
-                    <meta name="og:type" content="website" />
-                    <meta
-                        name="og:image"
-                        content="https://i.imgur.com/Iof3uSm.jpg"
-                    />
-                    <meta property="og:image:width" content="265" />
-                    <meta property="og:image:height" content="265" />
-                    <meta
-                        itemProp="image"
-                        content="https://i.imgur.com/Iof3uSm.jpg"
-                    />
-                </Head>
-                <main className={styles.container}>
-                    <ListAnimes
-                        paginate={this.paginationAnimes()}
-                        filters={this.filterAnimes()}
-                        animes={data?.data}
-                    />
-                </main>
-            </Layout>
-        );
-    }
-}
+    return (
+        <Layout>
+            <Head>
+                <title>{`Lista de animes • ${process.env.NAME}`}</title>
+                <meta
+                    name="description"
+                    content={`Anime Online Gratis, mira los últimos capitulos de los animes del momento sin ninguna restriccion subtitulados al español latino en ${process.env.NAME}`}
+                />
+                <link rel="canonical" href={`${process.env.URL}/animes`} />
+                <meta
+                    name="og:title"
+                    content={`Lista de animes • ${process.env.NAME}`}
+                />
+                <meta
+                    name="og:description"
+                    content={`Anime Online Gratis, mira los últimos capitulos de los animes del momento sin ninguna restriccion subtitulados al español latino en ${process.env.NAME}`}
+                />
+                <meta name="og:url" content={`${process.env.URL}/animes`} />
+                <meta name="og:locale" content="es_LA" />
+                <meta name="og:type" content="website" />
+                <meta
+                    name="og:image"
+                    content="https://i.imgur.com/Iof3uSm.jpg"
+                />
+                <meta property="og:image:width" content="265" />
+                <meta property="og:image:height" content="265" />
+                <meta
+                    itemProp="image"
+                    content="https://i.imgur.com/Iof3uSm.jpg"
+                />
+            </Head>
+            <main className={styles.container}>
+                <ListAnimes
+                    paginate={paginationAnimes()}
+                    filters={filterAnimes()}
+                    animes={data?.data}
+                />
+            </main>
+        </Layout>
+    );
+};
 
-index.getInitialProps = async (context) => {
+export async function getServerSideProps(context) {
     try {
-        const queryString = (obj) => {
-            return Object.entries(obj)
-                .map(([index, val]) => `${index}=${val}`)
-                .join('&');
-        };
-
-        const res = await api.get(
-            `anime/list?${queryString({ ...context?.query })}`
-        );
+        const { query } = context;
+        const res = await api.get(`anime/list`, { params: { ...query } });
         return {
-            data: res.data,
+            props: {
+                data: res.data,
+                query,
+            },
         };
     } catch (error) {
         return {
-            data: [],
+            props: {
+                data: [],
+                query: context.query,
+            },
         };
     }
-};
+}
 
-export default withRouter(index);
+export default Index;

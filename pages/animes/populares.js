@@ -55,21 +55,11 @@ export default function populares({ data }) {
     );
 }
 
-export async function getStaticProps() {
+export async function getServerSideProps() {
     try {
-        const data = await api.get(`anime/trending`);
-        return {
-            props: {
-                data: data.data,
-            },
-            revalidate: 60 * 60 * 24,
-        };
+        const res = await api.get(`anime/trending`);
+        return { props: { data: res.data } };
     } catch (error) {
-        return {
-            props: {
-                data: [],
-            },
-            revalidate: 1,
-        };
+        return { props: { data: [] } };
     }
 }

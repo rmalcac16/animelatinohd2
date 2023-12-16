@@ -53,17 +53,9 @@ export default class index extends Component {
 
 export async function getServerSideProps() {
     try {
-        const res = await api.get(`releases2`);
-        return {
-            props: {
-                releases: res.data,
-            },
-        };
+        const res = await api.get(`releases`);
+        return { props: { releases: res.data } };
     } catch (error) {
-        return {
-            props: {
-                releases: [],
-            },
-        };
+        return { props: { releases: [] } };
     }
 }
