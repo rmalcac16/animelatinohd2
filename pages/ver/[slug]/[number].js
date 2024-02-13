@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { fetchData } from '../../../lib/api';
 import Layout from '../../../components/Layout';
@@ -10,92 +9,65 @@ import {
     posterAnime,
     bannerAnime,
 } from '../../../helpers/Functions';
-import {
-    getLanguajePlayer,
-    getUrlVideo,
-    getCheckLatino,
-} from '../../../helpers/Strings';
+import { getLanguajePlayer, getCheckLatino } from '../../../helpers/Strings';
 
 import styles from '../../../styles/Episode.module.css';
-import DirectLinkAds from '../../../components/DirectLinkAds';
 
-import LaravelEncrypt from '../../../lib/laravel-encrypt';
 import PostRequestIframe from '../../../components/PostRequestIframe';
-import { encryptString } from '../../../helpers/encryptDecrypt';
+import { decryptString, encryptString } from '../../../helpers/encryptDecrypt';
+import Link from 'next/link';
 
-const encryptionKey = process.env.APIKEY;
-const encryptor = new LaravelEncrypt(encryptionKey);
+export default function Episode({ data }) {
+    const [languaje, setLanguaje] = useState(0);
+    const [server, setServer] = useState(0);
+    const [episode, setEpisode] = useState([]);
+    const [isMobile, setIsMobile] = useState(false);
 
-export default class number extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            iframe: process.env.STREAMURL,
-            languaje: this.props.data?.players[0] == undefined ? 1 : 0,
-            server: 0,
-            random: 0,
-            id: this.props.data.id,
-        };
-    }
+    useEffect(() => {
+        const decryptedData = decryptString(data);
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        let defaultLang = prevState.languaje;
-        if (nextProps.data.id !== prevState.id) {
-            defaultLang =
-                nextProps.data?.players[defaultLang] == undefined
-                    ? 0
-                    : defaultLang;
-            return {
-                languaje: defaultLang,
-                server: 0,
-                random: prevState.random + 1,
-                id: nextProps.data.id,
-            };
-        } else {
-            if (prevState.iframe == null) {
-                return {
-                    iframe: nextProps.data?.players[defaultLang]
-                        ? getUrlVideo(nextProps.data?.players[defaultLang][0])
-                        : null,
-                };
-            } else {
-                return prevState;
-            }
+        const userAgent = navigator.userAgent;
+        const mobileRegex =
+            /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i;
+        const mobileCheck = mobileRegex.test(userAgent);
+        setIsMobile(mobileCheck);
+
+        setEpisode(JSON.parse(decryptedData));
+        setLanguaje(Object.keys(JSON.parse(decryptedData).players)[0]);
+    }, [data]);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        if (name === 'languaje') {
+            setLanguaje(value);
+            setServer(0);
         }
-    }
-
-    handleChange = (e) => {
-        const { data } = this.props;
-        const { languaje } = this.state;
-
-        if (e.target.name === 'languaje') {
-            this.setState({
-                languaje: e.target.value,
-                iframe: getUrlVideo(data?.players[e.target.value][0]),
-                server: 0,
-            });
-        }
-        if (e.target.name === 'server') {
-            this.setState({
-                server: e.target.value,
-                iframe: getUrlVideo(data?.players[languaje][e.target.value]),
-            });
+        if (name === 'server') {
+            setServer(value);
         }
     };
 
-    videoPlayer = () => {
-        const { data } = this.props;
-        const { languaje, server } = this.state;
+    const videoPlayer = () => {
         let checkSandbox = false;
-        if (data.players[languaje]) {
-            let seversandbox = ['uqload', 'betam', 'gammam'];
-            checkSandbox = seversandbox.includes(
-                data?.players[languaje][server]?.server?.title?.toLowerCase()
-            );
+
+        if (!episode || !episode.players || !episode.players[languaje]) {
+            return null;
         }
+
+        let seversandbox = ['uqload', 'betam', 'gammam'];
+        checkSandbox = seversandbox.includes(
+            episode?.players[languaje][server]?.server?.title?.toLowerCase()
+        );
+
+        const filteredPlayers = isMobile
+            ? episode.players[languaje]
+            : episode.players[languaje].filter(
+                  (item) => item.server.title.toLowerCase() !== 'gamma'
+              );
+
         return (
             <div className={styles.videoPlayer}>
-                {getCheckLatino(data?.players) && (
+                {getCheckLatino(episode?.players) && (
                     <div className={styles.msg}>
                         <span>
                             Este capítulo está disponible en{' '}
@@ -110,9 +82,10 @@ export default class number extends Component {
                         <select
                             name={'languaje'}
                             id={'languaje'}
-                            onChange={this.handleChange}
+                            value={languaje}
+                            onChange={handleChange}
                         >
-                            {Object.keys(data?.players)?.map((item, idx) => (
+                            {Object.keys(episode?.players)?.map((item, idx) => (
                                 <option value={item} key={idx}>
                                     {getLanguajePlayer(item)}
                                 </option>
@@ -125,9 +98,9 @@ export default class number extends Component {
                             name={'server'}
                             value={server}
                             id={'server'}
-                            onChange={this.handleChange}
+                            onChange={handleChange}
                         >
-                            {data?.players[languaje]?.map((item, idx) => (
+                            {filteredPlayers.map((item, idx) => (
                                 <option value={idx} key={idx}>
                                     {item?.server?.title}
                                 </option>
@@ -139,7 +112,7 @@ export default class number extends Component {
                 <div className={styles.video}>
                     <PostRequestIframe
                         id={encryptString(
-                            data?.players[languaje][server]?.id.toString()
+                            episode?.players[languaje][server]?.id.toString()
                         )}
                     />
                 </div>
@@ -147,49 +120,53 @@ export default class number extends Component {
         );
     };
 
-    navCaps = () => {
-        const { data } = this.props;
+    const navCaps = () => {
         return (
             <div className={styles.navCaps}>
                 <div className={styles.column}>
                     <div className={styles.info}>
                         <Link
-                            href={slugAnime(data?.anime?.slug)}
+                            href={slugAnime(episode?.anime?.slug)}
                             className={styles.cover}
                         >
                             <img
                                 className={styles.cover}
-                                alt={`${data?.anime?.name} ${data?.number}`}
+                                alt={`${episode?.anime?.name} ${episode?.number}`}
                                 height={68}
                                 width={48}
                                 quality={95}
                                 layout="intrinsic"
                                 loading={'lazy'}
-                                src={posterAnime('w154', data?.anime?.poster)}
+                                src={posterAnime(
+                                    'w154',
+                                    episode?.anime?.poster
+                                )}
                             />
                         </Link>
                         <div className={styles.details}>
                             <div className={styles.info}>
                                 <h1>
-                                    <Link href={slugAnime(data?.anime?.slug)}>
-                                        {data?.anime?.name}
+                                    <Link
+                                        href={slugAnime(episode?.anime?.slug)}
+                                    >
+                                        {episode?.anime?.name}
                                     </Link>
                                 </h1>
                                 <span
                                     className={styles.currentEp}
-                                >{`Episodio ${data?.number}`}</span>
+                                >{`Episodio ${episode?.number}`}</span>
                             </div>
                             <p className={styles.desc}>
-                                {data?.anime?.overview?.slice(0, 50)}
+                                {episode?.anime?.overview?.slice(0, 50)}
                             </p>
                         </div>
                     </div>
                     <div className={styles.actions}>
-                        {data?.anterior && (
+                        {episode?.anterior && (
                             <Link
                                 href={slugEpisode(
-                                    data?.anime?.slug,
-                                    data?.anterior?.number
+                                    episode?.anime?.slug,
+                                    episode?.anterior?.number
                                 )}
                                 className={styles.button}
                             >
@@ -199,9 +176,9 @@ export default class number extends Component {
                                 Ep. Anterior
                             </Link>
                         )}
-                        {data?.anime && (
+                        {episode?.anime && (
                             <Link
-                                href={slugAnime(data?.anime?.slug)}
+                                href={slugAnime(episode?.anime?.slug)}
                                 className={styles.button}
                             >
                                 <svg viewBox="0 0 24 24">
@@ -209,11 +186,11 @@ export default class number extends Component {
                                 </svg>
                             </Link>
                         )}
-                        {data?.siguiente && (
+                        {episode?.siguiente && (
                             <Link
                                 href={slugEpisode(
-                                    data?.anime?.slug,
-                                    data?.siguiente?.number
+                                    episode?.anime?.slug,
+                                    episode?.siguiente?.number
                                 )}
                                 className={styles.button}
                             >
@@ -229,66 +206,55 @@ export default class number extends Component {
         );
     };
 
-    render() {
-        const { data } = this.props;
-        return (
-            <Layout>
-                <Head>
-                    <title>{`Ver ${data?.anime?.name} Capítulo ${data?.number} Sub Español Latino en HD Online • ${process.env.NAME}`}</title>
-                    <meta
-                        name="description"
-                        content={`Anime ${data?.anime?.name} capitulo ${data?.number} Sub Español Latino, ver online y descargar en hd 720p sin ninguna limitación`}
-                    />
-                    <link
-                        rel="canonical"
-                        href={`${process.env.URL}${slugEpisode(
-                            data?.anime?.slug,
-                            data?.number
-                        )}`}
-                    />
-                    <meta
-                        name="og:title"
-                        content={`Ver ${data?.anime?.name} Capítulo ${data?.number} Sub Español Latino en HD Online • ${process.env.NAME}`}
-                    />
-                    <meta
-                        name="og:description"
-                        content={`Anime ${data?.anime?.name} capitulo ${data?.number} Sub Español Latino, ver online y descargar en hd 720p sin ninguna limitación`}
-                    />
-                    <meta
-                        name="og:url"
-                        content={`${process.env.URL}${slugEpisode(
-                            data?.anime?.slug,
-                            data?.number
-                        )}`}
-                    />
-                    <meta name="og:locale" content="es_LA" />
-                    <meta name="og:type" content="video.episode" />
-                    <meta
-                        name="og:image"
-                        content={bannerAnime(data?.anime?.banner)}
-                    />
-                    <meta property="og:image:width" content="552" />
-                    <meta property="og:image:height" content="310" />
-                    <meta
-                        itemProp="image"
-                        content={bannerAnime('w780', data?.anime?.banner)}
-                    />
-                </Head>
-                <main className={styles.container}>
-                    {this.videoPlayer()}
-                    {this.navCaps()}
-                    {/* <Comments
-                        title={`${data?.anime?.name} Episodio ${data?.number}`}
-                        url={`${process.env.URL}${slugEpisode(
-                            data?.anime?.slug,
-                            data?.number
-                        )}`}
-                        id={`${data?.anime?.slug}-${data?.number}`}
-                    /> */}
-                </main>
-            </Layout>
-        );
-    }
+    return (
+        <Layout>
+            <Head>
+                <title>{`Ver ${episode?.anime?.name} Capítulo ${episode?.number} Sub Español Latino en HD Online • ${process.env.NAME}`}</title>
+                <meta
+                    name="description"
+                    content={`Anime ${episode?.anime?.name} capitulo ${episode?.number} Sub Español Latino, ver online y descargar en hd 720p sin ninguna limitación`}
+                />
+                <link
+                    rel="canonical"
+                    href={`${process.env.URL}${slugEpisode(
+                        episode?.anime?.slug,
+                        episode?.number
+                    )}`}
+                />
+                <meta
+                    name="og:title"
+                    content={`Ver ${episode?.anime?.name} Capítulo ${episode?.number} Sub Español Latino en HD Online • ${process.env.NAME}`}
+                />
+                <meta
+                    name="og:description"
+                    content={`Anime ${episode?.anime?.name} capitulo ${episode?.number} Sub Español Latino, ver online y descargar en hd 720p sin ninguna limitación`}
+                />
+                <meta
+                    name="og:url"
+                    content={`${process.env.URL}${slugEpisode(
+                        episode?.anime?.slug,
+                        episode?.number
+                    )}`}
+                />
+                <meta name="og:locale" content="es_LA" />
+                <meta name="og:type" content="video.episode" />
+                <meta
+                    name="og:image"
+                    content={bannerAnime(episode?.anime?.banner)}
+                />
+                <meta property="og:image:width" content="552" />
+                <meta property="og:image:height" content="310" />
+                <meta
+                    itemProp="image"
+                    content={bannerAnime('w780', episode?.anime?.banner)}
+                />
+            </Head>
+            <main className={styles.container}>
+                {videoPlayer()}
+                {navCaps()}
+            </main>
+        </Layout>
+    );
 }
 
 export async function getServerSideProps(context) {
@@ -296,51 +262,6 @@ export async function getServerSideProps(context) {
         const data = await fetchData(
             `anime/${context.params.slug}/episodes/${context.params.number}`
         );
-
-        Object.values(data.players).forEach((element) => {
-            element.sort((a, b) =>
-                a.server.position > b.server.position ? 1 : -1
-            );
-        });
-
-        Object.entries(data.players).forEach((element, i) => {
-            if (element[i]) {
-                data.players[element[0]] = element[1].filter(function (item) {
-                    if (item.server.status == 0 || item.server.status == 3) {
-                        return false;
-                    }
-                    return true;
-                });
-            }
-        });
-
-        let isMobileView = (
-            context.req
-                ? context.req.headers['user-agent']
-                : navigator.userAgent
-        ).match(
-            /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i
-        );
-
-        if (!Boolean(isMobileView)) {
-            Object.entries(data.players).forEach((element, i) => {
-                if (element[i]) {
-                    data.players[element[0]] = element[1].filter(function (
-                        item
-                    ) {
-                        if (
-                            item.server.title.toLowerCase() == 'archive' ||
-                            item.server.title.toLowerCase() == 'omega' ||
-                            item.server.title.toLowerCase() == 'gamma'
-                        ) {
-                            return false;
-                        } else {
-                            return true;
-                        }
-                    });
-                }
-            });
-        }
 
         return {
             props: {

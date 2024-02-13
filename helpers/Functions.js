@@ -49,7 +49,7 @@ export const simulCast = (object) => {
         let item = {
             dayName: dayName,
             dayNumber: dayNumber,
-            data: object[dayNumber],
+            data: object && object[dayNumber] ? object[dayNumber] : null, // Verificar si object está definido y si contiene la propiedad dayNumber
         };
         data.push(item);
     }

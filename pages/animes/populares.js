@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { api, fetchData } from '../../lib/api';
-
+import { fetchData } from '../../lib/api';
 import ListAnimes from '../../components/ListAnimes';
 import Layout from '../../components/Layout';
-
 import styles from '../../styles/Animes.module.css';
+import { decryptString } from '../../helpers/encryptDecrypt';
+const Index = ({ data }) => {
+    const [populars, setPopulars] = useState([]);
+    useEffect(() => {
+        const decryptedData = decryptString(data);
+        setPopulars(JSON.parse(decryptedData));
+    }, [data]);
 
-export default function populares({ data }) {
     return (
         <Layout>
             <Head>
@@ -48,18 +52,21 @@ export default function populares({ data }) {
             <main className={styles.container}>
                 <ListAnimes
                     title={'Animes populares'}
-                    animes={data?.popular_today}
+                    animes={populars?.popular_today}
                 />
             </main>
         </Layout>
     );
+};
+
+export async function getStaticProps() {
+    const data = await fetchData(`anime/trending`);
+    return {
+        props: {
+            data: data,
+        },
+        revalidate: 1,
+    };
 }
 
-export async function getServerSideProps() {
-    try {
-        const data = await fetchData(`anime/trending`);
-        return { props: { data: data } };
-    } catch (error) {
-        return { props: { data: [] } };
-    }
-}
+export default Index;

@@ -1,14 +1,21 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { withRouter } from 'next/router';
-import { api, fetchData } from '../../lib/api';
+import { fetchData } from '../../lib/api';
 import ListAnimes from '../../components/ListAnimes';
 import Layout from '../../components/Layout';
 import { filterAnime } from '../../helpers/Functions';
 
 import styles from '../../styles/Animes.module.css';
+import { decryptString } from '../../helpers/encryptDecrypt';
 
 const Index = ({ data, query }) => {
+    const [dataAnimes, setDataAnimes] = useState({});
+
+    useEffect(() => {
+        const decryptedEpisodes = decryptString(data);
+        setDataAnimes(JSON.parse(decryptedEpisodes));
+    }, [data, query]);
+
     const handleChange = async (e) => {
         const { name, value } = e.target;
         const queryParams = { ...query, [name]: value, page: 1 };
@@ -20,8 +27,8 @@ const Index = ({ data, query }) => {
     const changePage = async (type) => {
         const newPage =
             type === 'next'
-                ? parseInt(data?.current_page) + 1
-                : parseInt(data?.current_page) - 1;
+                ? parseInt(dataAnimes?.current_page) + 1
+                : parseInt(dataAnimes?.current_page) - 1;
         const queryParams = { ...query, page: newPage };
         const queryString = new URLSearchParams(queryParams).toString();
 
@@ -104,7 +111,7 @@ const Index = ({ data, query }) => {
     const paginationAnimes = () => {
         return (
             <div className={styles.paginate}>
-                {data?.prev_page_url && (
+                {dataAnimes?.prev_page_url && (
                     <a
                         className={styles.item}
                         onClick={() => changePage('prev')}
@@ -114,12 +121,12 @@ const Index = ({ data, query }) => {
                         </svg>
                     </a>
                 )}
-                {data?.current_page && (
+                {dataAnimes?.current_page && (
                     <a className={`${styles.item} ${styles.active}`}>
-                        {data?.current_page}
+                        {dataAnimes?.current_page}
                     </a>
                 )}
-                {data?.next_page_url && (
+                {dataAnimes?.next_page_url && (
                     <a
                         className={styles.item}
                         onClick={() => changePage('next')}
@@ -168,7 +175,7 @@ const Index = ({ data, query }) => {
                 <ListAnimes
                     paginate={paginationAnimes()}
                     filters={filterAnimes()}
-                    animes={data?.data}
+                    animes={dataAnimes?.data}
                 />
             </main>
         </Layout>
