@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "axios": "^0.21.1",
+        "crypto-js": "^4.2.0",
         "disqus-react": "^1.0.10",
         "eslint-config-next": "^13.4.19",
         "moment": "^2.29.4",

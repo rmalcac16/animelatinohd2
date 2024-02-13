@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Head from 'next/head';
 import { withRouter } from 'next/router';
-import { api } from '../../lib/api';
+import { api, fetchData } from '../../lib/api';
 import ListAnimes from '../../components/ListAnimes';
 import Layout from '../../components/Layout';
 import { filterAnime } from '../../helpers/Functions';
@@ -178,10 +178,12 @@ const Index = ({ data, query }) => {
 export async function getServerSideProps(context) {
     try {
         const { query } = context;
-        const res = await api.get(`anime/list`, { params: { ...query } });
+        const data = await fetchData(
+            `anime/list?${new URLSearchParams(query)}`
+        );
         return {
             props: {
-                data: res.data,
+                data: data,
                 query,
             },
         };

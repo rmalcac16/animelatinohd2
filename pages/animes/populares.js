@@ -1,6 +1,6 @@
 import React from 'react';
 import Head from 'next/head';
-import { api } from '../../lib/api';
+import { api, fetchData } from '../../lib/api';
 
 import ListAnimes from '../../components/ListAnimes';
 import Layout from '../../components/Layout';
@@ -57,8 +57,8 @@ export default function populares({ data }) {
 
 export async function getServerSideProps() {
     try {
-        const res = await api.get(`anime/trending`);
-        return { props: { data: res.data } };
+        const data = await fetchData(`anime/trending`);
+        return { props: { data: data } };
     } catch (error) {
         return { props: { data: [] } };
     }

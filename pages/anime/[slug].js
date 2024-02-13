@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
-import { api } from '../../lib/api';
+import { api, fetchData } from '../../lib/api';
 import Layout from '../../components/Layout';
 import Comments from '../../components/Comments';
 import AnimeEpisodeCard from '../../components/AnimeEpisodeCard';
@@ -211,10 +211,10 @@ export default class slug extends Component {
 
 export async function getServerSideProps(context) {
     try {
-        const res = await api.get(`anime/${context.params.slug}`);
+        const data = await fetchData(`anime/${context.params.slug}`);
         return {
             props: {
-                data: res.data,
+                data: data,
             },
         };
     } catch (error) {

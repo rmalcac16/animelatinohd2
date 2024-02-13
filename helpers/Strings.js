@@ -73,9 +73,13 @@ export const getNowDay = () => {
     var d = new Date();
     return d.getDay() + 1;
 };
+import LaravelEncrypt from '../lib/laravel-encrypt';
+const encryptionKey = process.env.APIKEY;
+const encryptor = new LaravelEncrypt(encryptionKey);
 
 export const getUrlVideo = (video) => {
-    return process.env.STREAMURL + video?.id;
+    const encryptedId = encryptor.encrypt(video?.id.toString());
+    return `${process.env.STREAMURL}${encryptedId}`;
 };
 
 export const getCheckLatino = (players) => {

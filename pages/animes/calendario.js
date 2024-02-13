@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Head from 'next/head';
-import { api } from '../../lib/api';
+import { fetchData } from '../../lib/api';
 import Layout from '../../components/Layout';
 import { simulCast } from '../../helpers/Functions';
 import AnimeCalendar from '../../components/AnimeCalendar';
@@ -84,8 +84,8 @@ export default class calendario extends Component {
 
 export async function getServerSideProps() {
     try {
-        const res = await api.get(`anime/simulcast`);
-        return { props: { simulcast: res.data } };
+        const data = await fetchData(`anime/simulcast`);
+        return { props: { simulcast: data } };
     } catch (error) {
         return { props: { simulcast: [] } };
     }

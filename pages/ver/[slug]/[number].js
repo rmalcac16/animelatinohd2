@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
-import Image from 'next/image';
-import { api } from '../../../lib/api';
+import { fetchData } from '../../../lib/api';
 import Layout from '../../../components/Layout';
-import Comments from '../../../components/Comments';
 
 import {
     slugEpisode,
@@ -21,11 +19,18 @@ import {
 import styles from '../../../styles/Episode.module.css';
 import DirectLinkAds from '../../../components/DirectLinkAds';
 
+import LaravelEncrypt from '../../../lib/laravel-encrypt';
+import PostRequestIframe from '../../../components/PostRequestIframe';
+import { encryptString } from '../../../helpers/encryptDecrypt';
+
+const encryptionKey = process.env.APIKEY;
+const encryptor = new LaravelEncrypt(encryptionKey);
+
 export default class number extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            iframe: null,
+            iframe: process.env.STREAMURL,
             languaje: this.props.data?.players[0] == undefined ? 1 : 0,
             server: 0,
             random: 0,
@@ -41,9 +46,6 @@ export default class number extends Component {
                     ? 0
                     : defaultLang;
             return {
-                iframe: nextProps.data?.players[defaultLang]
-                    ? getUrlVideo(nextProps.data?.players[defaultLang][0])
-                    : null,
                 languaje: defaultLang,
                 server: 0,
                 random: prevState.random + 1,
@@ -83,7 +85,7 @@ export default class number extends Component {
 
     videoPlayer = () => {
         const { data } = this.props;
-        const { iframe, languaje, server } = this.state;
+        const { languaje, server } = this.state;
         let checkSandbox = false;
         if (data.players[languaje]) {
             let seversandbox = ['uqload', 'betam', 'gammam'];
@@ -101,67 +103,46 @@ export default class number extends Component {
                         </span>
                     </div>
                 )}
-                {iframe && (
-                    <>
-                        <div className={styles.options}>
-                            <div className={styles.type}>
-                                <label htmlFor={'languaje'}>Idioma</label>
-                                <select
-                                    name={'languaje'}
-                                    id={'languaje'}
-                                    onChange={this.handleChange}
-                                >
-                                    {Object.keys(data?.players)?.map(
-                                        (item, idx) => (
-                                            <option value={item} key={idx}>
-                                                {getLanguajePlayer(item)}
-                                            </option>
-                                        )
-                                    )}
-                                </select>
-                            </div>
-                            <div className={styles.type}>
-                                <label htmlFor={'server'}>Servidor</label>
-                                <select
-                                    name={'server'}
-                                    value={server}
-                                    id={'server'}
-                                    onChange={this.handleChange}
-                                >
-                                    {data?.players[languaje]?.map(
-                                        (item, idx) => (
-                                            <option value={idx} key={idx}>
-                                                {item?.server?.title}
-                                            </option>
-                                        )
-                                    )}
-                                </select>
-                            </div>
-                        </div>
 
-                        <div className={styles.video}>
-                            <DirectLinkAds />
-                            {checkSandbox ? (
-                                <iframe
-                                    scrolling="no"
-                                    frameborder="0"
-                                    src={iframe}
-                                    sandbox="allow-scripts allow-same-origin"
-                                    display="initial"
-                                    allowfullscreen=""
-                                ></iframe>
-                            ) : (
-                                <iframe
-                                    scrolling="no"
-                                    frameborder="0"
-                                    src={iframe}
-                                    display="initial"
-                                    allowfullscreen=""
-                                ></iframe>
-                            )}
-                        </div>
-                    </>
-                )}
+                <div className={styles.options}>
+                    <div className={styles.type}>
+                        <label htmlFor={'languaje'}>Idioma</label>
+                        <select
+                            name={'languaje'}
+                            id={'languaje'}
+                            onChange={this.handleChange}
+                        >
+                            {Object.keys(data?.players)?.map((item, idx) => (
+                                <option value={item} key={idx}>
+                                    {getLanguajePlayer(item)}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className={styles.type}>
+                        <label htmlFor={'server'}>Servidor</label>
+                        <select
+                            name={'server'}
+                            value={server}
+                            id={'server'}
+                            onChange={this.handleChange}
+                        >
+                            {data?.players[languaje]?.map((item, idx) => (
+                                <option value={idx} key={idx}>
+                                    {item?.server?.title}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                <div className={styles.video}>
+                    <PostRequestIframe
+                        id={encryptString(
+                            data?.players[languaje][server]?.id.toString()
+                        )}
+                    />
+                </div>
             </div>
         );
     };
@@ -312,21 +293,19 @@ export default class number extends Component {
 
 export async function getServerSideProps(context) {
     try {
-        const res = await api.get(
+        const data = await fetchData(
             `anime/${context.params.slug}/episodes/${context.params.number}`
         );
 
-        Object.values(res.data.players).forEach((element) => {
+        Object.values(data.players).forEach((element) => {
             element.sort((a, b) =>
                 a.server.position > b.server.position ? 1 : -1
             );
         });
 
-        Object.entries(res.data.players).forEach((element, i) => {
+        Object.entries(data.players).forEach((element, i) => {
             if (element[i]) {
-                res.data.players[element[0]] = element[1].filter(function (
-                    item
-                ) {
+                data.players[element[0]] = element[1].filter(function (item) {
                     if (item.server.status == 0 || item.server.status == 3) {
                         return false;
                     }
@@ -344,9 +323,9 @@ export async function getServerSideProps(context) {
         );
 
         if (!Boolean(isMobileView)) {
-            Object.entries(res.data.players).forEach((element, i) => {
+            Object.entries(data.players).forEach((element, i) => {
                 if (element[i]) {
-                    res.data.players[element[0]] = element[1].filter(function (
+                    data.players[element[0]] = element[1].filter(function (
                         item
                     ) {
                         if (
@@ -365,7 +344,7 @@ export async function getServerSideProps(context) {
 
         return {
             props: {
-                data: res.data,
+                data: data,
             },
         };
     } catch (error) {

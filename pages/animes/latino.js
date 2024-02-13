@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Head from 'next/head';
 import { withRouter } from 'next/router';
-import { api } from '../../lib/api';
+import { api, fetchData } from '../../lib/api';
 import ListAnimes from '../../components/ListAnimes';
 import Layout from '../../components/Layout';
 
@@ -127,8 +127,8 @@ class index extends Component {
 
 export async function getServerSideProps() {
     try {
-        const res = await api.get(`anime/latino`);
-        return { props: { data: res.data } };
+        const data = await fetchData(`anime/latino`);
+        return { props: { data: data } };
     } catch (error) {
         return { props: { data: [] } };
     }

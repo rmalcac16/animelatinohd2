@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Head from 'next/head';
 import Layout from '../components/Layout';
 import ListEpisodes from '../components/ListEpisodes';
-import { api } from '../lib/api';
+import { fetchData } from '../lib/api';
 import styles from '../styles/Home.module.css';
 
 export default class index extends Component {
@@ -53,9 +53,11 @@ export default class index extends Component {
 
 export async function getServerSideProps() {
     try {
-        const res = await api.get(`releases`);
-        return { props: { releases: res.data } };
+        const data = await fetchData(`releases`);
+        console.log(data);
+        return { props: { releases: data } };
     } catch (error) {
+        console.log(error);
         return { props: { releases: [] } };
     }
 }
