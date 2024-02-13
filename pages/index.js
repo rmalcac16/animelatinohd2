@@ -4,6 +4,7 @@ import Layout from '../components/Layout';
 import ListEpisodes from '../components/ListEpisodes';
 import { fetchData } from '../lib/api';
 import styles from '../styles/Home.module.css';
+import { isJson } from '../helpers/Functions';
 
 export default class index extends Component {
     constructor(props) {
@@ -54,10 +55,8 @@ export default class index extends Component {
 export async function getServerSideProps() {
     try {
         const data = await fetchData(`releases`);
-        console.log(data);
         return { props: { releases: data } };
     } catch (error) {
-        console.log(error);
         return { props: { releases: [] } };
     }
 }
