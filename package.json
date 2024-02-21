@@ -19,7 +19,7 @@
         "next-images": "^1.6.2",
         "nprogress": "^0.2.0",
         "react": "^18.2.0",
-        "react-device-detect": "latest",
+        "react-device-detect": "^2.2.3",
         "react-dom": "^18.2.0",
         "react-ga": "^3.3.0",
         "react-icons": "^4.1.0",

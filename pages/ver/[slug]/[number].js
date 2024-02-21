@@ -17,13 +17,12 @@ import PostRequestIframe from '../../../components/PostRequestIframe';
 import { decryptString, encryptString } from '../../../helpers/encryptDecrypt';
 import Link from 'next/link';
 
-import { checkMobile } from '../../../helpers/checkMobile';
+import { isMobile } from 'react-device-detect';
 
 export default function Page({ data, params, searchParams }) {
     const decodedData = JSON.parse(decryptString(data));
 
     const episodeData = useMemo(() => {
-        const isMobile = checkMobile(navigator.userAgent);
         if (!isMobile) {
             const nonGammaPlayers = Object.keys(decodedData.players).reduce(
                 (filteredPlayers, language) => {
