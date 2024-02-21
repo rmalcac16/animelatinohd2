@@ -117,13 +117,16 @@ export default function Page({ data, params, searchParams }) {
                 </div>
 
                 <div className={styles.video}>
-                    <PostRequestIframe
-                        id={encryptString(
-                            episodeData?.players[languaje][
-                                server
-                            ]?.id.toString()
-                        )}
-                    />
+                    {isClient ? (
+                        <PostRequestIframe
+                            id={encryptString(
+                                episodeData?.players[languaje][
+                                    server
+                                ]?.id.toString()
+                            )}
+                            token={episodeData?.token}
+                        />
+                    ) : null}
                 </div>
             </div>
         );
