@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import { fetchData } from '../../../lib/api';
 import Layout from '../../../components/Layout';
@@ -17,24 +17,41 @@ import PostRequestIframe from '../../../components/PostRequestIframe';
 import { decryptString, encryptString } from '../../../helpers/encryptDecrypt';
 import Link from 'next/link';
 
-export default function Episode({ data }) {
-    const [languaje, setLanguaje] = useState(0);
+import { checkMobile } from '../../../helpers/checkMobile';
+
+export default function Page({ data, params, searchParams }) {
+    const decodedData = JSON.parse(decryptString(data));
+
+    const episodeData = useMemo(() => {
+        const isMobile = checkMobile(navigator.userAgent);
+        if (!isMobile) {
+            const nonGammaPlayers = Object.keys(decodedData.players).reduce(
+                (filteredPlayers, language) => {
+                    const playersWithoutGammaServer = decodedData.players[
+                        language
+                    ].filter((item) => item.server.title !== 'Gamma');
+                    return {
+                        ...filteredPlayers,
+                        [language]: playersWithoutGammaServer,
+                    };
+                },
+                {}
+            );
+            return { ...decodedData, players: nonGammaPlayers };
+        } else {
+            return decodedData;
+        }
+    }, [decodedData]);
+
+    const [languaje, setLanguaje] = useState(
+        Object.keys(episodeData.players)[0]
+    );
+
     const [server, setServer] = useState(0);
-    const [episode, setEpisode] = useState([]);
-    const [isMobile, setIsMobile] = useState(false);
-
+    const [isClient, setIsClient] = useState(false);
     useEffect(() => {
-        const decryptedData = decryptString(data);
-
-        const userAgent = navigator.userAgent;
-        const mobileRegex =
-            /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i;
-        const mobileCheck = mobileRegex.test(userAgent);
-        setIsMobile(mobileCheck);
-
-        setEpisode(JSON.parse(decryptedData));
-        setLanguaje(Object.keys(JSON.parse(decryptedData).players)[0]);
-    }, [data]);
+        setIsClient(true);
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -48,26 +65,9 @@ export default function Episode({ data }) {
     };
 
     const videoPlayer = () => {
-        let checkSandbox = false;
-
-        if (!episode || !episode.players || !episode.players[languaje]) {
-            return null;
-        }
-
-        let seversandbox = ['uqload', 'betam', 'gammam'];
-        checkSandbox = seversandbox.includes(
-            episode?.players[languaje][server]?.server?.title?.toLowerCase()
-        );
-
-        const filteredPlayers = isMobile
-            ? episode.players[languaje]
-            : episode.players[languaje].filter(
-                  (item) => item.server.title.toLowerCase() !== 'gamma'
-              );
-
         return (
             <div className={styles.videoPlayer}>
-                {getCheckLatino(episode?.players) && (
+                {getCheckLatino(episodeData.players) && (
                     <div className={styles.msg}>
                         <span>
                             Este capítulo está disponible en{' '}
@@ -85,11 +85,13 @@ export default function Episode({ data }) {
                             value={languaje}
                             onChange={handleChange}
                         >
-                            {Object.keys(episode?.players)?.map((item, idx) => (
-                                <option value={item} key={idx}>
-                                    {getLanguajePlayer(item)}
-                                </option>
-                            ))}
+                            {Object.keys(episodeData.players)?.map(
+                                (item, idx) => (
+                                    <option value={item} key={idx}>
+                                        {getLanguajePlayer(item)}
+                                    </option>
+                                )
+                            )}
                         </select>
                     </div>
                     <div className={styles.type}>
@@ -100,11 +102,17 @@ export default function Episode({ data }) {
                             id={'server'}
                             onChange={handleChange}
                         >
-                            {filteredPlayers.map((item, idx) => (
-                                <option value={idx} key={idx}>
-                                    {item?.server?.title}
-                                </option>
-                            ))}
+                            {isClient
+                                ? episodeData?.players[languaje].map(
+                                      (item, index) => {
+                                          return (
+                                              <option value={index} key={index}>
+                                                  {item.server.title}
+                                              </option>
+                                          );
+                                      }
+                                  )
+                                : null}
                         </select>
                     </div>
                 </div>
@@ -112,7 +120,9 @@ export default function Episode({ data }) {
                 <div className={styles.video}>
                     <PostRequestIframe
                         id={encryptString(
-                            episode?.players[languaje][server]?.id.toString()
+                            episodeData?.players[languaje][
+                                server
+                            ]?.id.toString()
                         )}
                     />
                 </div>
@@ -126,12 +136,12 @@ export default function Episode({ data }) {
                 <div className={styles.column}>
                     <div className={styles.info}>
                         <Link
-                            href={slugAnime(episode?.anime?.slug)}
+                            href={slugAnime(episodeData?.anime?.slug)}
                             className={styles.cover}
                         >
                             <img
                                 className={styles.cover}
-                                alt={`${episode?.anime?.name} ${episode?.number}`}
+                                alt={`${episodeData?.anime?.name} ${episodeData?.number}`}
                                 height={68}
                                 width={48}
                                 quality={95}
@@ -139,7 +149,7 @@ export default function Episode({ data }) {
                                 loading={'lazy'}
                                 src={posterAnime(
                                     'w154',
-                                    episode?.anime?.poster
+                                    episodeData?.anime?.poster
                                 )}
                             />
                         </Link>
@@ -147,26 +157,28 @@ export default function Episode({ data }) {
                             <div className={styles.info}>
                                 <h1>
                                     <Link
-                                        href={slugAnime(episode?.anime?.slug)}
+                                        href={slugAnime(
+                                            episodeData?.anime?.slug
+                                        )}
                                     >
-                                        {episode?.anime?.name}
+                                        {episodeData?.anime?.name}
                                     </Link>
                                 </h1>
                                 <span
                                     className={styles.currentEp}
-                                >{`Episodio ${episode?.number}`}</span>
+                                >{`Episodio ${episodeData?.number}`}</span>
                             </div>
                             <p className={styles.desc}>
-                                {episode?.anime?.overview?.slice(0, 50)}
+                                {episodeData?.anime?.overview?.slice(0, 50)}
                             </p>
                         </div>
                     </div>
                     <div className={styles.actions}>
-                        {episode?.anterior && (
+                        {episodeData?.anterior && (
                             <Link
                                 href={slugEpisode(
-                                    episode?.anime?.slug,
-                                    episode?.anterior?.number
+                                    episodeData?.anime?.slug,
+                                    episodeData?.anterior?.number
                                 )}
                                 className={styles.button}
                             >
@@ -176,9 +188,9 @@ export default function Episode({ data }) {
                                 Ep. Anterior
                             </Link>
                         )}
-                        {episode?.anime && (
+                        {episodeData?.anime && (
                             <Link
-                                href={slugAnime(episode?.anime?.slug)}
+                                href={slugAnime(episodeData?.anime?.slug)}
                                 className={styles.button}
                             >
                                 <svg viewBox="0 0 24 24">
@@ -186,11 +198,11 @@ export default function Episode({ data }) {
                                 </svg>
                             </Link>
                         )}
-                        {episode?.siguiente && (
+                        {episodeData?.siguiente && (
                             <Link
                                 href={slugEpisode(
-                                    episode?.anime?.slug,
-                                    episode?.siguiente?.number
+                                    episodeData?.anime?.slug,
+                                    episodeData?.siguiente?.number
                                 )}
                                 className={styles.button}
                             >
@@ -209,44 +221,44 @@ export default function Episode({ data }) {
     return (
         <Layout>
             <Head>
-                <title>{`Ver ${episode?.anime?.name} Capítulo ${episode?.number} Sub Español Latino en HD Online • ${process.env.NAME}`}</title>
+                <title>{`Ver ${episodeData?.anime?.name} Capítulo ${episodeData?.number} Sub Español Latino en HD Online • ${process.env.NAME}`}</title>
                 <meta
                     name="description"
-                    content={`Anime ${episode?.anime?.name} capitulo ${episode?.number} Sub Español Latino, ver online y descargar en hd 720p sin ninguna limitación`}
+                    content={`Anime ${episodeData?.anime?.name} capitulo ${episodeData?.number} Sub Español Latino, ver online y descargar en hd 720p sin ninguna limitación`}
                 />
                 <link
                     rel="canonical"
                     href={`${process.env.URL}${slugEpisode(
-                        episode?.anime?.slug,
-                        episode?.number
+                        episodeData?.anime?.slug,
+                        episodeData?.number
                     )}`}
                 />
                 <meta
                     name="og:title"
-                    content={`Ver ${episode?.anime?.name} Capítulo ${episode?.number} Sub Español Latino en HD Online • ${process.env.NAME}`}
+                    content={`Ver ${episodeData?.anime?.name} Capítulo ${episodeData?.number} Sub Español Latino en HD Online • ${process.env.NAME}`}
                 />
                 <meta
                     name="og:description"
-                    content={`Anime ${episode?.anime?.name} capitulo ${episode?.number} Sub Español Latino, ver online y descargar en hd 720p sin ninguna limitación`}
+                    content={`Anime ${episodeData?.anime?.name} capitulo ${episodeData?.number} Sub Español Latino, ver online y descargar en hd 720p sin ninguna limitación`}
                 />
                 <meta
                     name="og:url"
                     content={`${process.env.URL}${slugEpisode(
-                        episode?.anime?.slug,
-                        episode?.number
+                        episodeData?.anime?.slug,
+                        episodeData?.number
                     )}`}
                 />
                 <meta name="og:locale" content="es_LA" />
                 <meta name="og:type" content="video.episode" />
                 <meta
                     name="og:image"
-                    content={bannerAnime(episode?.anime?.banner)}
+                    content={bannerAnime(episodeData?.anime?.banner)}
                 />
                 <meta property="og:image:width" content="552" />
                 <meta property="og:image:height" content="310" />
                 <meta
                     itemProp="image"
-                    content={bannerAnime('w780', episode?.anime?.banner)}
+                    content={bannerAnime('w780', episodeData?.anime?.banner)}
                 />
             </Head>
             <main className={styles.container}>

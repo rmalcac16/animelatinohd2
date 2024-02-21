@@ -44,13 +44,10 @@ export default class Search extends Component {
         axios
             .get(`${process.env.APIURL}anime/search?search=${q}`, {
                 cancelToken: this.cancel.token,
-                headers: {
-                    key: process.env.APIKEY,
-                },
             })
             .then((res) => {
                 this.setState({
-                    animes: decryptString(res.data.data),
+                    animes: JSON.parse(decryptString(res.data.data)),
                     fetching: false,
                 });
             })

@@ -6,7 +6,7 @@ const PostRequestIframe = ({ id }) => {
             <iframe
                 allowFullScreen
                 style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
-                src={process.env.STREAMURL + `?id=` + id}
+                src={process.env.STREAMURL + `/` + id}
             ></iframe>
         </div>
     );
