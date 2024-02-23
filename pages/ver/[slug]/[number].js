@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
-import { fetchData } from '../../../lib/api';
+import { api, fetchData } from '../../../lib/api';
 import Layout from '../../../components/Layout';
 
 import {
@@ -18,8 +18,9 @@ import { decryptString, encryptString } from '../../../helpers/encryptDecrypt';
 import Link from 'next/link';
 
 import { isMobile } from 'react-device-detect';
+import { generateToken } from '../../../helpers/generateToken';
 
-export default function Page({ data, params, searchParams }) {
+export default function Page({ data }) {
     const decodedData = JSON.parse(decryptString(data));
 
     const episodeData = useMemo(() => {
@@ -45,12 +46,30 @@ export default function Page({ data, params, searchParams }) {
     const [languaje, setLanguaje] = useState(
         Object.keys(episodeData.players)[0]
     );
-
     const [server, setServer] = useState(0);
     const [isClient, setIsClient] = useState(false);
+    const [iframe, setIframe] = useState('');
+
     useEffect(() => {
         setIsClient(true);
     }, []);
+
+    useEffect(() => {
+        const cargarIframe = async () => {
+            if (episodeData) {
+                const idPlayer = encryptString(
+                    episodeData?.players[languaje][server]?.id.toString()
+                );
+                const token = await generateToken(idPlayer);
+                const encryptedToken = encryptString(token);
+                setIframe(
+                    `${process.env.STREAMURL}/${idPlayer}/${encryptedToken}`
+                );
+            }
+        };
+
+        cargarIframe();
+    }, [data, languaje, server]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -117,16 +136,7 @@ export default function Page({ data, params, searchParams }) {
                 </div>
 
                 <div className={styles.video}>
-                    {isClient ? (
-                        <PostRequestIframe
-                            id={encryptString(
-                                episodeData?.players[languaje][
-                                    server
-                                ]?.id.toString()
-                            )}
-                            token={episodeData?.token}
-                        />
-                    ) : null}
+                    {isClient ? <PostRequestIframe iframe={iframe} /> : null}
                 </div>
             </div>
         );
@@ -276,13 +286,13 @@ export async function getServerSideProps(context) {
         const data = await fetchData(
             `anime/${context.params.slug}/episodes/${context.params.number}`
         );
-
         return {
             props: {
                 data: data,
             },
         };
     } catch (error) {
+        console.error(error.message);
         return {
             notFound: true,
         };
