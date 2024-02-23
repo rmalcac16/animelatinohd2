@@ -18,7 +18,6 @@ import { decryptString, encryptString } from '../../../helpers/encryptDecrypt';
 import Link from 'next/link';
 
 import { isMobile } from 'react-device-detect';
-import { generateToken } from '../../../helpers/generateToken';
 
 export default function Page({ data }) {
     const decodedData = JSON.parse(decryptString(data));
@@ -60,11 +59,7 @@ export default function Page({ data }) {
                 const idPlayer = encryptString(
                     episodeData?.players[languaje][server]?.id.toString()
                 );
-                const token = await generateToken(idPlayer);
-                const encryptedToken = encryptString(token);
-                setIframe(
-                    `${process.env.STREAMURL}/${idPlayer}/${encryptedToken}`
-                );
+                setIframe(`${process.env.STREAMURL}/${idPlayer}`);
             }
         };
 
