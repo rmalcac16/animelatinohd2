@@ -1,5 +1,6 @@
 import moment from 'moment';
 import 'moment/locale/es';
+import { encryptString } from './encryptDecrypt';
 moment.locale('es');
 
 export const getFromNow = (date) => {
@@ -73,15 +74,12 @@ export const getNowDay = () => {
     var d = new Date();
     return d.getDay() + 1;
 };
-import LaravelEncrypt from '../lib/laravel-encrypt';
-const encryptionKey = process.env.APIKEY;
-const encryptor = new LaravelEncrypt(encryptionKey);
 
-export const getUrlVideo = (video) => {
-    const encryptedId = encryptor.encrypt(video?.id.toString());
+export const getUrlVideo = (id) => {
+    const encryptedId = encryptString(id?.toString());
     return `${process.env.STREAMURL}${encryptedId}`;
 };
 
 export const getCheckLatino = (players) => {
-    return 1 in players ? true : false;
+    return 1 in Object.keys(players) ? true : false;
 };

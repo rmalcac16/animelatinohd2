@@ -9,62 +9,43 @@ import {
     posterAnime,
     bannerAnime,
 } from '../../../helpers/Functions';
-import { getLanguajePlayer, getCheckLatino } from '../../../helpers/Strings';
+import {
+    getLanguajePlayer,
+    getCheckLatino,
+    getUrlVideo,
+} from '../../../helpers/Strings';
 
 import styles from '../../../styles/Episode.module.css';
 
 import PostRequestIframe from '../../../components/PostRequestIframe';
-import { decryptString, encryptString } from '../../../helpers/encryptDecrypt';
+import { decryptString } from '../../../helpers/encryptDecrypt';
 import Link from 'next/link';
 
 import { isMobile } from 'react-device-detect';
 
 export default function Page({ data }) {
-    const decodedData = JSON.parse(decryptString(data));
-
-    const episodeData = useMemo(() => {
-        if (!isMobile) {
-            const nonGammaPlayers = Object.keys(decodedData.players).reduce(
-                (filteredPlayers, language) => {
-                    const playersWithoutGammaServer = decodedData.players[
-                        language
-                    ].filter((item) => item.server.title !== 'Gamma');
-                    return {
-                        ...filteredPlayers,
-                        [language]: playersWithoutGammaServer,
-                    };
-                },
-                {}
-            );
-            return { ...decodedData, players: nonGammaPlayers };
-        } else {
-            return decodedData;
-        }
-    }, [decodedData]);
-
+    const episodeData = JSON.parse(decryptString(data));
     const [languaje, setLanguaje] = useState(
         Object.keys(episodeData.players)[0]
     );
     const [server, setServer] = useState(0);
-    const [isClient, setIsClient] = useState(false);
-    const [iframe, setIframe] = useState('');
+    const [players, setPlayers] = useState([]);
 
     useEffect(() => {
-        setIsClient(true);
-    }, []);
-
-    useEffect(() => {
-        const cargarIframe = async () => {
-            if (episodeData) {
-                const idPlayer = encryptString(
-                    episodeData?.players[languaje][server]?.id.toString()
+        if (!isMobile) {
+            const modifiedPlayers = { ...episodeData.players };
+            Object.keys(modifiedPlayers).forEach((languaje) => {
+                modifiedPlayers[languaje] = modifiedPlayers[languaje].filter(
+                    (player) => player.server.title !== 'Gamma'
                 );
-                setIframe(`${process.env.STREAMURL}/${idPlayer}`);
-            }
-        };
-
-        cargarIframe();
-    }, [data, languaje, server]);
+            });
+            setPlayers(modifiedPlayers);
+        } else {
+            setPlayers(episodeData.players);
+        }
+        setLanguaje(Object.keys(episodeData?.players)[0]);
+        setServer(0);
+    }, [data]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -78,9 +59,12 @@ export default function Page({ data }) {
     };
 
     const videoPlayer = () => {
+        if (Object.keys(players).length === 0) return null;
+        const selectedPlayer = players[languaje]?.[server];
+        const videoUrl = selectedPlayer ? getUrlVideo(selectedPlayer.id) : '';
         return (
             <div className={styles.videoPlayer}>
-                {getCheckLatino(episodeData.players) && (
+                {getCheckLatino(Object.keys(players)) && (
                     <div className={styles.msg}>
                         <span>
                             Este capítulo está disponible en{' '}
@@ -88,7 +72,6 @@ export default function Page({ data }) {
                         </span>
                     </div>
                 )}
-
                 <div className={styles.options}>
                     <div className={styles.type}>
                         <label htmlFor={'languaje'}>Idioma</label>
@@ -98,13 +81,11 @@ export default function Page({ data }) {
                             value={languaje}
                             onChange={handleChange}
                         >
-                            {Object.keys(episodeData.players)?.map(
-                                (item, idx) => (
-                                    <option value={item} key={idx}>
-                                        {getLanguajePlayer(item)}
-                                    </option>
-                                )
-                            )}
+                            {Object.keys(players).map((languaje, idx) => (
+                                <option value={languaje} key={idx}>
+                                    {getLanguajePlayer(languaje)}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div className={styles.type}>
@@ -115,23 +96,16 @@ export default function Page({ data }) {
                             id={'server'}
                             onChange={handleChange}
                         >
-                            {isClient
-                                ? episodeData?.players[languaje].map(
-                                      (item, index) => {
-                                          return (
-                                              <option value={index} key={index}>
-                                                  {item.server.title}
-                                              </option>
-                                          );
-                                      }
-                                  )
-                                : null}
+                            {players[languaje].map((item, index) => (
+                                <option value={index} key={index}>
+                                    {item.server.title}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>
-
                 <div className={styles.video}>
-                    {isClient ? <PostRequestIframe iframe={iframe} /> : null}
+                    <PostRequestIframe iframe={videoUrl} />
                 </div>
             </div>
         );
@@ -287,7 +261,6 @@ export async function getServerSideProps(context) {
             },
         };
     } catch (error) {
-        console.error(error.message);
         return {
             notFound: true,
         };

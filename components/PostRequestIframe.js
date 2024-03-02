@@ -1,5 +1,4 @@
 import React from 'react';
-import { encryptString } from '../helpers/encryptDecrypt';
 
 const PostRequestIframe = ({ iframe }) => {
     return (
@@ -8,7 +7,6 @@ const PostRequestIframe = ({ iframe }) => {
                 allowFullScreen
                 style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
                 src={iframe}
-                data-a={encryptString(process.env.SECRETKEY)}
             ></iframe>
         </div>
     );

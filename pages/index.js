@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Head from 'next/head';
 import Layout from '../components/Layout';
 import ListEpisodes from '../components/ListEpisodes';
 import { fetchData } from '../lib/api';
 import styles from '../styles/Home.module.css';
 import { decryptString } from '../helpers/encryptDecrypt';
+import DecryptError from '../components/DecryptError';
 
 const Index = ({ data }) => {
-    const [episodes, setEpisodes] = useState([]);
-    useEffect(() => {
-        const decryptedEpisodes = decryptString(data);
-        setEpisodes(JSON.parse(decryptedEpisodes));
-    }, [data]);
+    try {
+        const episodes = JSON.parse(decryptString(data));
+        return <IndexComponent episodes={episodes} />;
+    } catch (error) {
+        return <DecryptError />;
+    }
+};
 
+const IndexComponent = ({ episodes }) => {
     return (
         <Layout>
             <Head>
