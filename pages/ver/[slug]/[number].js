@@ -13,6 +13,8 @@ import {
     getLanguajePlayer,
     getCheckLatino,
     getUrlVideo,
+    getCheckCastellano,
+    getLanguageAvailabilityMessage,
 } from '../../../helpers/Strings';
 
 import styles from '../../../styles/Episode.module.css';
@@ -64,11 +66,14 @@ export default function Page({ data }) {
         const videoUrl = selectedPlayer ? getUrlVideo(selectedPlayer.id) : '';
         return (
             <div className={styles.videoPlayer}>
-                {getCheckLatino(Object.keys(players)) && (
+                {getLanguageAvailabilityMessage(players) && (
                     <div className={styles.msg}>
-                        <span>
-                            Este capítulo está disponible en{' '}
-                            <b>Español Latino</b>
+                        <span
+                            dangerouslySetInnerHTML={{
+                                __html: getLanguageAvailabilityMessage(players),
+                            }}
+                        >
+                            {}
                         </span>
                     </div>
                 )}

@@ -45,7 +45,12 @@ export const getPopularityAnime = (popularity) => {
 };
 
 export const getLanguajePlayer = (languaje) => {
-    return languaje === '0' ? 'Subtitulado' : 'Latino';
+    const languajeMap = {
+        0: 'Subtitulado',
+        1: 'Latino',
+        2: 'Castellano',
+    };
+    return languajeMap[languaje] || languajeMap['0'];
 };
 
 export const getStreamPlayer = (item) => {
@@ -81,5 +86,24 @@ export const getUrlVideo = (id) => {
 };
 
 export const getCheckLatino = (players) => {
-    return 1 in Object.keys(players) ? true : false;
+    return players.hasOwnProperty('1');
+};
+
+export const getCheckCastellano = (players) => {
+    return players.hasOwnProperty('2');
+};
+
+export const getLanguageAvailabilityMessage = (players) => {
+    const hasLatino = '1' in players;
+    const hasCastellano = '2' in players;
+
+    if (hasLatino && hasCastellano) {
+        return 'Este capítulo está disponible en <strong>Español Latino</strong> y <strong>Castellano</strong>';
+    } else if (hasLatino && !hasCastellano) {
+        return 'Este capítulo está disponible en <strong>Español Latino</strong>';
+    } else if (!hasLatino && hasCastellano) {
+        return 'Este capítulo está disponible en <strong>Castellano</strong>';
+    } else {
+        return 'No hay información disponible sobre los idiomas de este capítulo';
+    }
 };
