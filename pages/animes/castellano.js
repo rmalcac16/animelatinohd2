@@ -111,14 +111,24 @@ const Index = ({ data, error }) => {
                 />
             </Head>
             <main className={styles.container}>
-                <ListAnimes
-                    title={'Animes en Castellano'}
-                    animes={animeData?.slice(
-                        (page - 1) * perPage,
-                        page * perPage
-                    )}
-                    paginate={paginationAnimes()}
-                />
+                {JSON.stringify(animeData)}
+                {Object.keys(animeData).length === 0 ? (
+                    <div style={{ 'margin-top': '5rem' }}>
+                        <h1>No hay animes disponibles</h1>
+                    </div>
+                ) : (
+                    <ListAnimes
+                        title={'Animes en Castellano'}
+                        animes={
+                            animeData &&
+                            animeData.slice(
+                                (page - 1) * perPage,
+                                page * perPage
+                            )
+                        }
+                        paginate={paginationAnimes()}
+                    />
+                )}
             </main>
         </Layout>
     );
@@ -127,6 +137,7 @@ const Index = ({ data, error }) => {
 export async function getStaticProps() {
     try {
         const data = await fetchData(`anime/castellano`);
+        console.log(data);
         return {
             props: {
                 data: data,
