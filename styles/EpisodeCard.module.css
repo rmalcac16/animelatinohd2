@@ -171,3 +171,15 @@
     font-weight: bold;
     text-transform: uppercase;
 }
+
+.container .labelCast {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 0.3rem 0.4rem;
+    font-size: 0.7rem;
+    border-radius: 0 0.4rem 0 0rem;
+    background: #ce5a11;
+    font-weight: bold;
+    text-transform: uppercase;
+}

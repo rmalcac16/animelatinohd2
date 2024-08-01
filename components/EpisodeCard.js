@@ -24,7 +24,9 @@ export default class EpisodeCard extends Component {
                         {episode?.languaje == 1 && (
                             <span className={styles.label}>Español Latino</span>
                         )}
-
+                        {episode?.languaje == 2 && (
+                            <span className={styles.labelCast}>Castellano</span>
+                        )}
                         <span className={styles.time} suppressHydrationWarning>
                             {getFromNow(episode?.created_at)}
                         </span>
