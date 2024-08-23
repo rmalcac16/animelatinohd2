@@ -1,22 +1,24 @@
 import React from 'react';
 import Head from 'next/head';
 import Layout from '../components/Layout';
-import ListEpisodes from '../components/ListEpisodes';
 import { fetchData } from '../lib/api';
 import styles from '../styles/Home.module.css';
 import { decryptString } from '../helpers/encryptDecrypt';
 import DecryptError from '../components/DecryptError';
 
+import ListEpisodes from '../components/ListEpisodes';
+import ListAnimesRecents from '../components/ListAnimesRecents';
+
 const Index = ({ data }) => {
     try {
-        const episodes = JSON.parse(decryptString(data));
-        return <IndexComponent episodes={episodes} />;
+        const dataJson = JSON.parse(decryptString(data));
+        return <IndexComponent data={dataJson} />;
     } catch (error) {
         return <DecryptError />;
     }
 };
 
-const IndexComponent = ({ episodes }) => {
+const IndexComponent = ({ data }) => {
     return (
         <Layout>
             <Head>
@@ -49,7 +51,8 @@ const IndexComponent = ({ episodes }) => {
                 />
             </Head>
             <main className={styles.container}>
-                <ListEpisodes episodes={episodes} />
+                <ListEpisodes episodes={data?.episodes} />
+                <ListAnimesRecents animes={data?.animes} />
             </main>
         </Layout>
     );

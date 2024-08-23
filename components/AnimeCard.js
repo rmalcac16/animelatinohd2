@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { posterAnime, slugAnime, nFormatter } from '../helpers/Functions';
 import { getYear } from '../helpers/Strings';
 
