@@ -13,7 +13,7 @@ export default class ListAnimesRecents extends Component {
         return (
             <div className={styles.box}>
                 <h1>
-                    <span className={styles.border}>Episodios recientes</span>
+                    <span className={styles.border}>Animes recientes</span>
                 </h1>
                 <div className={styles.listAnimes}>
                     {animes?.map((anime, idx) => (
