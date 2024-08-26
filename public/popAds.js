@@ -1,4 +1,6 @@
 (function () {
+    //version 1.0.0
+
     var adConfig = {
         ads_host: 'a.pemsrv.com',
         syndication_host: 's.pemsrv.com',
@@ -12,28 +14,32 @@
         trigger_method: 3,
         trigger_class: '',
         trigger_delay: 0,
+        capping_enabled: true,
         only_inline: false,
     };
-    if (!window.document.querySelectorAll) {
-        document.querySelectorAll =
+
+    window.document.querySelectorAll ||
+        (document.querySelectorAll =
             document.body.querySelectorAll =
             Object.querySelectorAll =
-                function querySelectorAllPolyfill(r, c, i, j, a) {
-                    var d = document,
-                        s = d.createStyleSheet();
-                    a = d.all;
-                    c = [];
-                    r = r.replace(/\[for\b/gi, '[htmlFor').split(',');
-                    for (i = r.length; i--; ) {
-                        s.addRule(r[i], 'k:v');
-                        for (j = a.length; j--; ) {
-                            a[j].currentStyle.k && c.push(a[j]);
-                        }
-                        s.removeRule(0);
+                function e(o, i, t, n, r) {
+                    var a = document,
+                        c = a.createStyleSheet();
+                    for (
+                        r = a.all,
+                            i = [],
+                            t = (o = o
+                                .replace(/\[for\b/gi, '[htmlFor')
+                                .split(',')).length;
+                        t--;
+
+                    ) {
+                        for (c.addRule(o[t], 'k:v'), n = r.length; n--; )
+                            r[n].currentStyle.k && i.push(r[n]);
+                        c.removeRule(0);
                     }
-                    return c;
-                };
-    }
+                    return i;
+                });
     var popMagic = {
         version: 1,
         cookie_name: '',
@@ -42,8 +48,8 @@
         open_count: 0,
         top: null,
         browser: null,
-        venor_loaded: false,
-        venor: false,
+        venor_loaded: !1,
+        venor: !1,
         configTpl: {
             ads_host: '',
             syndication_host: '',
@@ -52,428 +58,383 @@
             frequency_count: 1,
             trigger_method: 1,
             trigger_class: '',
-            popup_force: false,
-            popup_fallback: false,
-            chrome_enabled: true,
-            new_tab: false,
+            popup_force: !1,
+            popup_fallback: !1,
+            chrome_enabled: !0,
+            new_tab: !1,
             cat: '',
             tags: '',
             el: '',
             sub: '',
             sub2: '',
             sub3: '',
-            only_inline: false,
+            only_inline: !1,
             trigger_delay: 0,
-            cookieconsent: true,
+            capping_enabled: !1,
+            cookieconsent: !0,
         },
-        init: function (config) {
-            if (typeof config.idzone === 'undefined' || !config.idzone) {
-                return;
+        init: function (e) {
+            if (void 0 !== e.idzone && e.idzone) {
+                void 0 === e.customTargeting && (e.customTargeting = []),
+                    (window.customTargeting = e.customTargeting || null);
+                var o = Object.keys(e.customTargeting).filter(function (e) {
+                    return e.search('ex_') >= 0;
+                });
+                for (var i in (o.length &&
+                    o.forEach(
+                        function (e) {
+                            return (this.configTpl[e] = null);
+                        }.bind(this)
+                    ),
+                this.configTpl))
+                    Object.prototype.hasOwnProperty.call(this.configTpl, i) &&
+                        (void 0 !== e[i]
+                            ? (this.config[i] = e[i])
+                            : (this.config[i] = this.configTpl[i]));
+                void 0 !== this.config.idzone &&
+                    '' !== this.config.idzone &&
+                    (!0 !== this.config.only_inline && this.loadHosted(),
+                    this.addEventToElement(window, 'load', this.preparePop));
             }
-            if (typeof config['customTargeting'] === 'undefined') {
-                config['customTargeting'] = [];
-            }
-            window['customTargeting'] = config['customTargeting'] || null;
-            var customTargeting = Object.keys(config['customTargeting']).filter(
-                function (c) {
-                    return c.search('ex_') >= 0;
-                }
-            );
-            if (customTargeting.length) {
-                customTargeting.forEach(
-                    function (ct) {
-                        return (this.configTpl[ct] = null);
-                    }.bind(this)
-                );
-            }
-            for (var key in this.configTpl) {
-                if (
-                    !Object.prototype.hasOwnProperty.call(this.configTpl, key)
-                ) {
-                    continue;
-                }
-                if (typeof config[key] !== 'undefined') {
-                    this.config[key] = config[key];
-                } else {
-                    this.config[key] = this.configTpl[key];
-                }
-            }
-            if (
-                typeof this.config.idzone === 'undefined' ||
-                this.config.idzone === ''
-            ) {
-                return;
-            }
-            if (this.config.only_inline !== true) {
-                this.loadHosted();
-            }
-            this.addEventToElement(window, 'load', this.preparePop);
         },
         getCountFromCookie: function () {
-            if (!this.config.cookieconsent) {
-                return 0;
-            }
-            var shownCookie = popMagic.getCookie(popMagic.cookie_name);
-            var ctr =
-                typeof shownCookie === 'undefined' ? 0 : parseInt(shownCookie);
-            if (isNaN(ctr)) {
-                ctr = 0;
-            }
-            return ctr;
+            if (!this.config.cookieconsent) return 0;
+            var e = popMagic.getCookie(popMagic.cookie_name),
+                o = void 0 === e ? 0 : parseInt(e);
+            return isNaN(o) && (o = 0), o;
         },
         getLastOpenedTimeFromCookie: function () {
-            var shownCookie = popMagic.getCookie(popMagic.cookie_name);
-            var delay = null;
-            if (typeof shownCookie !== 'undefined') {
-                var value = shownCookie.split(';')[1];
-                delay = value > 0 ? parseInt(value) : 0;
+            var e = popMagic.getCookie(popMagic.cookie_name),
+                o = null;
+            if (void 0 !== e) {
+                var i = e.split(';')[1];
+                o = i > 0 ? parseInt(i) : 0;
             }
-            if (isNaN(delay)) {
-                delay = null;
-            }
-            return delay;
+            return isNaN(o) && (o = null), o;
         },
         shouldShow: function () {
-            if (popMagic.open_count >= popMagic.config.frequency_count) {
-                return false;
-            }
-            var ctr = popMagic.getCountFromCookie();
-            const last_opened_time = popMagic.getLastOpenedTimeFromCookie();
-            const current_time = Math.floor(Date.now() / 1e3);
-            const maximumDelayTime =
-                last_opened_time + popMagic.config.trigger_delay;
-            if (last_opened_time && maximumDelayTime > current_time) {
-                return false;
-            }
-            popMagic.open_count = ctr;
-            return !(ctr >= popMagic.config.frequency_count);
+            if (!popMagic.config.capping_enabled)
+                return 0 === popMagic.open_count;
+            if (popMagic.open_count >= popMagic.config.frequency_count)
+                return !1;
+            var e = popMagic.getCountFromCookie();
+            let o = popMagic.getLastOpenedTimeFromCookie(),
+                i = Math.floor(Date.now() / 1e3),
+                t = o + popMagic.config.trigger_delay;
+            return (
+                (!o || !(t > i)) &&
+                ((popMagic.open_count = e),
+                !(e >= popMagic.config.frequency_count))
+            );
         },
         venorShouldShow: function () {
-            return popMagic.venor_loaded && popMagic.venor === '0';
+            return popMagic.venor_loaded && '0' === popMagic.venor;
         },
-        setAsOpened: function () {
-            var new_ctr = 1;
-            if (popMagic.open_count !== 0) {
-                new_ctr = popMagic.open_count + 1;
-            } else {
-                new_ctr = popMagic.getCountFromCookie() + 1;
+        setAsOpened: function (e) {
+            var o = e ? e.target || e.srcElement : null,
+                i = {
+                    id: '',
+                    tagName: '',
+                    classes: '',
+                    text: '',
+                    href: '',
+                    elm: '',
+                };
+            void 0 !== o &&
+                null != o &&
+                (i = {
+                    id: void 0 !== o.id && null != o.id ? o.id : '',
+                    tagName:
+                        void 0 !== o.tagName && null != o.tagName
+                            ? o.tagName
+                            : '',
+                    classes:
+                        void 0 !== o.classList && null != o.classList
+                            ? o.classList
+                            : '',
+                    text:
+                        void 0 !== o.outerText && null != o.outerText
+                            ? o.outerText
+                            : '',
+                    href: void 0 !== o.href && null != o.href ? o.href : '',
+                    elm: o,
+                });
+            var t = new CustomEvent(
+                'creativeDisplayed-' + popMagic.config.idzone,
+                { detail: i }
+            );
+            if ((document.dispatchEvent(t), !popMagic.config.capping_enabled)) {
+                ++popMagic.open_count;
+                return;
             }
-            const last_opened_time = Math.floor(Date.now() / 1e3);
-            if (popMagic.config.cookieconsent) {
+            var n = 1;
+            n =
+                0 !== popMagic.open_count
+                    ? popMagic.open_count + 1
+                    : popMagic.getCountFromCookie() + 1;
+            let r = Math.floor(Date.now() / 1e3);
+            popMagic.config.cookieconsent &&
                 popMagic.setCookie(
                     popMagic.cookie_name,
-                    `${new_ctr};${last_opened_time}`,
+                    `${n};${r}`,
                     popMagic.config.frequency_period
                 );
-            }
         },
         loadHosted: function () {
-            var hostedScript = document.createElement('script');
-            hostedScript.type = 'application/javascript';
-            hostedScript.async = true;
-            hostedScript.src = '//' + this.config.ads_host + '/popunder1000.js';
-            hostedScript.id = 'popmagicldr';
-            for (var key in this.config) {
-                if (!Object.prototype.hasOwnProperty.call(this.config, key)) {
-                    continue;
-                }
-                if (key === 'ads_host' || key === 'syndication_host') {
-                    continue;
-                }
-                hostedScript.setAttribute('data-exo-' + key, this.config[key]);
-            }
-            var insertAnchor = document.getElementsByTagName('body').item(0);
-            if (insertAnchor.firstChild) {
-                insertAnchor.insertBefore(
-                    hostedScript,
-                    insertAnchor.firstChild
-                );
-            } else {
-                insertAnchor.appendChild(hostedScript);
-            }
+            var e = document.createElement('script');
+            for (var o in ((e.type = 'application/javascript'),
+            (e.async = !0),
+            (e.src = '//' + this.config.ads_host + '/popunder1000.js'),
+            (e.id = 'popmagicldr'),
+            this.config))
+                Object.prototype.hasOwnProperty.call(this.config, o) &&
+                    'ads_host' !== o &&
+                    'syndication_host' !== o &&
+                    e.setAttribute('data-exo-' + o, this.config[o]);
+            var i = document.getElementsByTagName('body').item(0);
+            i.firstChild ? i.insertBefore(e, i.firstChild) : i.appendChild(e);
         },
         preparePop: function () {
             if (
-                typeof exoJsPop101 === 'object' &&
-                Object.prototype.hasOwnProperty.call(exoJsPop101, 'add')
+                !(
+                    'object' == typeof exoJsPop101 &&
+                    Object.prototype.hasOwnProperty.call(exoJsPop101, 'add')
+                )
             ) {
-                return;
-            }
-            popMagic.top = self;
-            if (popMagic.top !== self) {
-                try {
-                    if (top.document.location.toString()) {
-                        popMagic.top = top;
+                if (((popMagic.top = self), popMagic.top !== self))
+                    try {
+                        top.document.location.toString() &&
+                            (popMagic.top = top);
+                    } catch (e) {}
+                if (
+                    ((popMagic.cookie_name =
+                        'zone-cap-' + popMagic.config.idzone),
+                    popMagic.shouldShow())
+                ) {
+                    var o = new XMLHttpRequest();
+                    o.onreadystatechange = function () {
+                        o.readyState == XMLHttpRequest.DONE &&
+                            ((popMagic.venor_loaded = !0),
+                            200 == o.status
+                                ? (popMagic.venor = o.responseText)
+                                : (popMagic.venor = '0'));
+                    };
+                    var i =
+                        'https:' !== document.location.protocol &&
+                        'http:' !== document.location.protocol
+                            ? 'https:'
+                            : document.location.protocol;
+                    o.open(
+                        'GET',
+                        i +
+                            '//' +
+                            popMagic.config.syndication_host +
+                            '/venor.php',
+                        !0
+                    );
+                    try {
+                        o.send();
+                    } catch (t) {
+                        popMagic.venor_loaded = !0;
                     }
-                } catch (err) {}
-            }
-            popMagic.cookie_name = 'zone-cap-' + popMagic.config.idzone;
-            if (popMagic.shouldShow()) {
-                var xmlhttp = new XMLHttpRequest();
-                xmlhttp.onreadystatechange = function () {
-                    if (xmlhttp.readyState == XMLHttpRequest.DONE) {
-                        popMagic.venor_loaded = true;
-                        if (xmlhttp.status == 200) {
-                            popMagic.venor = xmlhttp.responseText;
-                        }
-                    }
-                };
-                var protocol =
-                    document.location.protocol !== 'https:' &&
-                    document.location.protocol !== 'http:'
-                        ? 'https:'
-                        : document.location.protocol;
-                xmlhttp.open(
-                    'GET',
-                    protocol +
-                        '//' +
-                        popMagic.config.syndication_host +
-                        '/venor.php',
-                    true
-                );
-                try {
-                    xmlhttp.send();
-                } catch (error) {
-                    popMagic.venor_loaded = true;
+                }
+                if (
+                    (popMagic.buildUrl(),
+                    (popMagic.browser = popMagic.browserDetector.detectBrowser(
+                        navigator.userAgent
+                    )),
+                    popMagic.config.chrome_enabled ||
+                        ('chrome' !== popMagic.browser.name &&
+                            'crios' !== popMagic.browser.name))
+                ) {
+                    var n = popMagic.getPopMethod(popMagic.browser);
+                    popMagic.addEvent('click', n);
                 }
             }
-            popMagic.buildUrl();
-            popMagic.browser = popMagic.browserDetector.detectBrowser(
-                navigator.userAgent
-            );
-            if (
-                !popMagic.config.chrome_enabled &&
-                (popMagic.browser.name === 'chrome' ||
-                    popMagic.browser.name === 'crios')
-            ) {
-                return;
-            }
-            var popMethod = popMagic.getPopMethod(popMagic.browser);
-            popMagic.addEvent('click', popMethod);
         },
-        getPopMethod: function (browserInfo) {
-            if (popMagic.config.popup_force) {
-                return popMagic.methods.popup;
-            }
-            if (
-                popMagic.config.popup_fallback &&
-                browserInfo.name === 'chrome' &&
-                browserInfo.version >= 68 &&
-                !browserInfo.isMobile
-            ) {
-                return popMagic.methods.popup;
-            }
-            if (browserInfo.isMobile) {
-                return popMagic.methods.default;
-            }
-            if (browserInfo.name === 'chrome') {
-                return popMagic.methods.chromeTab;
-            }
-            return popMagic.methods.default;
+        getPopMethod: function (e) {
+            return popMagic.config.popup_force ||
+                (popMagic.config.popup_fallback &&
+                    'chrome' === e.name &&
+                    e.version >= 68 &&
+                    !e.isMobile)
+                ? popMagic.methods.popup
+                : e.isMobile
+                ? popMagic.methods.default
+                : 'chrome' === e.name
+                ? popMagic.methods.chromeTab
+                : popMagic.methods.default;
         },
         buildUrl: function () {
-            var protocol =
-                document.location.protocol !== 'https:' &&
-                document.location.protocol !== 'http:'
-                    ? 'https:'
-                    : document.location.protocol;
-            var p = top === self ? document.URL : document.referrer;
-            var script_info = {
-                type: 'inline',
-                name: 'popMagic',
-                ver: this.version,
-            };
-            var encodeScriptInfo = function (script_info) {
-                var result =
-                    script_info['type'] +
-                    '|' +
-                    script_info['name'] +
-                    '|' +
-                    script_info['ver'];
-                return encodeURIComponent(btoa(result));
-            };
-            var customTargetingParams = '';
-            if (customTargeting && Object.keys(customTargeting).length) {
-                var customTargetingKeys =
-                    typeof customTargeting === 'object'
-                        ? Object.keys(customTargeting)
-                        : customTargeting;
-                var value;
-                customTargetingKeys.forEach(function (key) {
-                    if (typeof customTargeting === 'object') {
-                        value = customTargeting[key];
-                    } else if (Array.isArray(customTargeting)) {
-                        value = scriptEl.getAttribute(key);
-                    }
-                    var keyWithoutExoPrefix = key.replace('data-exo-', '');
-                    customTargetingParams += `&${keyWithoutExoPrefix}=${value}`;
-                });
-            }
-            this.url =
-                protocol +
-                '//' +
-                this.config.syndication_host +
-                '/splash.php' +
-                '?cat=' +
-                this.config.cat +
-                '&idzone=' +
-                this.config.idzone +
-                '&type=8' +
-                '&p=' +
-                encodeURIComponent(p) +
-                '&sub=' +
-                this.config.sub +
-                (this.config.sub2 !== '' ? '&sub2=' + this.config.sub2 : '') +
-                (this.config.sub3 !== '' ? '&sub3=' + this.config.sub3 : '') +
-                '&block=1' +
-                '&el=' +
-                this.config.el +
-                '&tags=' +
-                this.config.tags +
-                '&cookieconsent=' +
-                this.config.cookieconsent +
-                '&scr_info=' +
-                encodeScriptInfo(script_info) +
-                customTargetingParams;
+            var e,
+                o,
+                i =
+                    'https:' !== document.location.protocol &&
+                    'http:' !== document.location.protocol
+                        ? 'https:'
+                        : document.location.protocol,
+                t = top === self ? document.URL : document.referrer,
+                n = { type: 'inline', name: 'popMagic', ver: this.version },
+                r = '';
+            customTargeting &&
+                Object.keys(customTargeting).length &&
+                ('object' == typeof customTargeting
+                    ? Object.keys(customTargeting)
+                    : customTargeting
+                ).forEach(function (o) {
+                    'object' == typeof customTargeting
+                        ? (e = customTargeting[o])
+                        : Array.isArray(customTargeting) &&
+                          (e = scriptEl.getAttribute(o)),
+                        (r += `&${o.replace('data-exo-', '')}=${e}`);
+                }),
+                (this.url =
+                    i +
+                    '//' +
+                    this.config.syndication_host +
+                    '/splash.php?cat=' +
+                    this.config.cat +
+                    '&idzone=' +
+                    this.config.idzone +
+                    '&type=8&p=' +
+                    encodeURIComponent(t) +
+                    '&sub=' +
+                    this.config.sub +
+                    ('' !== this.config.sub2
+                        ? '&sub2=' + this.config.sub2
+                        : '') +
+                    ('' !== this.config.sub3
+                        ? '&sub3=' + this.config.sub3
+                        : '') +
+                    '&block=1&el=' +
+                    this.config.el +
+                    '&tags=' +
+                    this.config.tags +
+                    '&cookieconsent=' +
+                    this.config.cookieconsent +
+                    '&scr_info=' +
+                    encodeURIComponent(
+                        btoa((o = n).type + '|' + o.name + '|' + o.ver)
+                    ) +
+                    r);
         },
-        addEventToElement: function (obj, type, fn) {
-            if (obj.addEventListener) {
-                obj.addEventListener(type, fn, false);
-            } else if (obj.attachEvent) {
-                obj['e' + type + fn] = fn;
-                obj[type + fn] = function () {
-                    obj['e' + type + fn](window.event);
-                };
-                obj.attachEvent('on' + type, obj[type + fn]);
-            } else {
-                obj['on' + type] = obj['e' + type + fn];
-            }
+        addEventToElement: function (e, o, i) {
+            e.addEventListener
+                ? e.addEventListener(o, i, !1)
+                : e.attachEvent
+                ? ((e['e' + o + i] = i),
+                  (e[o + i] = function () {
+                      e['e' + o + i](window.event);
+                  }),
+                  e.attachEvent('on' + o, e[o + i]))
+                : (e['on' + o] = e['e' + o + i]);
         },
-        addEvent: function (type, fn) {
-            var targetElements;
-            if (popMagic.config.trigger_method == '3') {
-                targetElements = document.querySelectorAll('a');
-                for (i = 0; i < targetElements.length; i++) {
-                    popMagic.addEventToElement(targetElements[i], type, fn);
-                }
+        addEvent: function (e, o) {
+            var i;
+            if ('3' == popMagic.config.trigger_method) {
+                for (
+                    r = 0, i = document.querySelectorAll('a');
+                    r < i.length;
+                    r++
+                )
+                    popMagic.addEventToElement(i[r], e, o);
                 return;
             }
             if (
-                popMagic.config.trigger_method == '2' &&
-                popMagic.config.trigger_method != ''
+                '2' == popMagic.config.trigger_method &&
+                '' != popMagic.config.trigger_method
             ) {
-                var trigger_classes;
-                var trigger_classes_final = [];
-                if (popMagic.config.trigger_class.indexOf(',') === -1) {
-                    trigger_classes = popMagic.config.trigger_class.split(' ');
-                } else {
-                    var trimmed_trigger_classes =
-                        popMagic.config.trigger_class.replace(/\s/g, '');
-                    trigger_classes = trimmed_trigger_classes.split(',');
-                }
-                for (var i = 0; i < trigger_classes.length; i++) {
-                    if (trigger_classes[i] !== '') {
-                        trigger_classes_final.push('.' + trigger_classes[i]);
-                    }
-                }
-                targetElements = document.querySelectorAll(
-                    trigger_classes_final.join(', ')
-                );
-                for (i = 0; i < targetElements.length; i++) {
-                    popMagic.addEventToElement(targetElements[i], type, fn);
-                }
+                var t,
+                    n = [];
+                t =
+                    -1 === popMagic.config.trigger_class.indexOf(',')
+                        ? popMagic.config.trigger_class.split(' ')
+                        : popMagic.config.trigger_class
+                              .replace(/\s/g, '')
+                              .split(',');
+                for (var r = 0; r < t.length; r++)
+                    '' !== t[r] && n.push('.' + t[r]);
+                for (
+                    r = 0, i = document.querySelectorAll(n.join(', '));
+                    r < i.length;
+                    r++
+                )
+                    popMagic.addEventToElement(i[r], e, o);
                 return;
             }
-            popMagic.addEventToElement(document, type, fn);
+            popMagic.addEventToElement(document, e, o);
         },
-        setCookie: function (name, value, ttl_minutes) {
-            if (!this.config.cookieconsent) {
-                return false;
-            }
-            ttl_minutes = parseInt(ttl_minutes, 10);
-            var now_date = new Date();
-            now_date.setMinutes(now_date.getMinutes() + parseInt(ttl_minutes));
-            var c_value =
-                encodeURIComponent(value) +
+        setCookie: function (e, o, i) {
+            if (!this.config.cookieconsent) return !1;
+            i = parseInt(i, 10);
+            var t = new Date();
+            t.setMinutes(t.getMinutes() + parseInt(i));
+            var n =
+                encodeURIComponent(o) +
                 '; expires=' +
-                now_date.toUTCString() +
+                t.toUTCString() +
                 '; path=/';
-            document.cookie = name + '=' + c_value;
+            document.cookie = e + '=' + n;
         },
-        getCookie: function (name) {
-            if (!this.config.cookieconsent) {
-                return false;
-            }
-            var i,
-                x,
-                y,
-                cookiesArray = document.cookie.split(';');
-            for (i = 0; i < cookiesArray.length; i++) {
-                x = cookiesArray[i].substr(0, cookiesArray[i].indexOf('='));
-                y = cookiesArray[i].substr(cookiesArray[i].indexOf('=') + 1);
-                x = x.replace(/^\s+|\s+$/g, '');
-                if (x === name) {
-                    return decodeURIComponent(y);
-                }
-            }
-        },
-        randStr: function (length, possibleChars) {
-            var text = '';
-            var possible =
-                possibleChars ||
-                'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            for (var i = 0; i < length; i++) {
-                text += possible.charAt(
-                    Math.floor(Math.random() * possible.length)
-                );
-            }
-            return text;
-        },
-        isValidUserEvent: function (event) {
-            if (
-                'isTrusted' in event &&
-                event.isTrusted &&
-                popMagic.browser.name !== 'ie' &&
-                popMagic.browser.name !== 'safari'
-            ) {
-                return true;
-            } else {
-                return event.screenX != 0 && event.screenY != 0;
-            }
-        },
-        isValidHref: function (href) {
-            if (typeof href === 'undefined' || href == '') {
-                return false;
-            }
-            var empty_ref = /\s?javascript\s?:/i;
-            return !empty_ref.test(href);
-        },
-        findLinkToOpen: function (clickedElement) {
-            var target = clickedElement;
-            var location = false;
-            try {
-                var breakCtr = 0;
-                while (
-                    breakCtr < 20 &&
-                    !target.getAttribute('href') &&
-                    target !== document &&
-                    target.nodeName.toLowerCase() !== 'html'
-                ) {
-                    target = target.parentNode;
-                    breakCtr++;
-                }
-                var elementTargetAttr = target.getAttribute('target');
+        getCookie: function (e) {
+            if (!this.config.cookieconsent) return !1;
+            var o,
+                i,
+                t,
+                n = document.cookie.split(';');
+            for (o = 0; o < n.length; o++)
                 if (
-                    !elementTargetAttr ||
-                    elementTargetAttr.indexOf('_blank') === -1
-                ) {
-                    location = target.getAttribute('href');
-                }
-            } catch (err) {}
-            if (!popMagic.isValidHref(location)) {
-                location = false;
-            }
-            return location || window.location.href;
+                    ((i = n[o].substr(0, n[o].indexOf('='))),
+                    (t = n[o].substr(n[o].indexOf('=') + 1)),
+                    (i = i.replace(/^\s+|\s+$/g, '')) === e)
+                )
+                    return decodeURIComponent(t);
+        },
+        randStr: function (e, o) {
+            for (
+                var i = '',
+                    t =
+                        o ||
+                        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+                    n = 0;
+                n < e;
+                n++
+            )
+                i += t.charAt(Math.floor(Math.random() * t.length));
+            return i;
+        },
+        isValidUserEvent: function (e) {
+            return (
+                ('isTrusted' in e &&
+                    !!e.isTrusted &&
+                    'ie' !== popMagic.browser.name &&
+                    'safari' !== popMagic.browser.name) ||
+                (0 != e.screenX && 0 != e.screenY)
+            );
+        },
+        isValidHref: function (e) {
+            return void 0 !== e && '' != e && !/\s?javascript\s?:/i.test(e);
+        },
+        findLinkToOpen: function (e) {
+            var o = e,
+                i = !1;
+            try {
+                for (
+                    var t = 0;
+                    t < 20 &&
+                    !o.getAttribute('href') &&
+                    o !== document &&
+                    'html' !== o.nodeName.toLowerCase();
+
+                )
+                    (o = o.parentNode), t++;
+                var n = o.getAttribute('target');
+                (n && -1 !== n.indexOf('_blank')) ||
+                    (i = o.getAttribute('href'));
+            } catch (r) {}
+            return (
+                popMagic.isValidHref(i) || (i = !1), i || window.location.href
+            );
         },
         getPuId: function () {
             return 'ok_' + Math.floor(89999999 * Math.random() + 1e7);
@@ -499,146 +460,127 @@
                 ['yandexbrowser', /YaBrowser\/([0-9._]+)/],
                 ['crios', /CriOS\/([0-9.]+)(:?\s|$)/],
             ],
-            detectBrowser: function (userAgent) {
-                var isMobile = userAgent.match(
+            detectBrowser: function (e) {
+                var o = e.match(
                     /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WebOS|Windows Phone/i
                 );
                 for (var i in this.browserDefinitions) {
-                    var definition = this.browserDefinitions[i];
-                    if (definition[1].test(userAgent)) {
-                        var match = definition[1].exec(userAgent);
-                        var version =
-                            match && match[1].split(/[._]/).slice(0, 3);
-                        var versionTails =
-                            Array.prototype.slice.call(version, 1).join('') ||
-                            '0';
-                        if (version && version.length < 3) {
-                            Array.prototype.push.apply(
-                                version,
-                                version.length === 1 ? [0, 0] : [0]
-                            );
-                        }
-                        return {
-                            name: definition[0],
-                            version: version.join('.'),
-                            versionNumber: parseFloat(
-                                version[0] + '.' + versionTails
-                            ),
-                            isMobile: isMobile,
-                        };
+                    var t = this.browserDefinitions[i];
+                    if (t[1].test(e)) {
+                        var n = t[1].exec(e),
+                            r = n && n[1].split(/[._]/).slice(0, 3),
+                            a =
+                                Array.prototype.slice.call(r, 1).join('') ||
+                                '0';
+                        return (
+                            r &&
+                                r.length < 3 &&
+                                Array.prototype.push.apply(
+                                    r,
+                                    1 === r.length ? [0, 0] : [0]
+                                ),
+                            {
+                                name: t[0],
+                                version: r.join('.'),
+                                versionNumber: parseFloat(r[0] + '.' + a),
+                                isMobile: o,
+                            }
+                        );
                     }
                 }
                 return {
                     name: 'other',
                     version: '1.0',
                     versionNumber: 1,
-                    isMobile: isMobile,
+                    isMobile: o,
                 };
             },
         },
         methods: {
-            default: function (triggeredEvent) {
+            default: function (e) {
                 if (
                     !popMagic.shouldShow() ||
                     !popMagic.venorShouldShow() ||
-                    !popMagic.isValidUserEvent(triggeredEvent)
+                    !popMagic.isValidUserEvent(e)
                 )
-                    return true;
-                var clickedElement =
-                    triggeredEvent.target || triggeredEvent.srcElement;
-                var href = popMagic.findLinkToOpen(clickedElement);
-                window.open(href, '_blank');
-                popMagic.setAsOpened();
-                popMagic.top.document.location = popMagic.url;
-                if (typeof triggeredEvent.preventDefault !== 'undefined') {
-                    triggeredEvent.preventDefault();
-                    triggeredEvent.stopPropagation();
-                }
-                return true;
+                    return !0;
+                var o = e.target || e.srcElement,
+                    i = popMagic.findLinkToOpen(o);
+                return (
+                    window.open(i, '_blank'),
+                    popMagic.setAsOpened(e),
+                    (popMagic.top.document.location = popMagic.url),
+                    void 0 !== e.preventDefault &&
+                        (e.preventDefault(), e.stopPropagation()),
+                    !0
+                );
             },
-            chromeTab: function (event) {
+            chromeTab: function (e) {
                 if (
                     !popMagic.shouldShow() ||
                     !popMagic.venorShouldShow() ||
-                    !popMagic.isValidUserEvent(event)
+                    !popMagic.isValidUserEvent(e) ||
+                    void 0 === e.preventDefault
                 )
-                    return true;
-                if (typeof event.preventDefault !== 'undefined') {
-                    event.preventDefault();
-                    event.stopPropagation();
-                } else {
-                    return true;
-                }
-                var a = top.window.document.createElement('a');
-                var target = event.target || event.srcElement;
-                a.href = popMagic.findLinkToOpen(target);
-                document.getElementsByTagName('body')[0].appendChild(a);
-                var e = new MouseEvent('click', {
-                    bubbles: true,
-                    cancelable: true,
+                    return !0;
+                e.preventDefault(), e.stopPropagation();
+                var o = top.window.document.createElement('a'),
+                    i = e.target || e.srcElement;
+                (o.href = popMagic.findLinkToOpen(i)),
+                    document.getElementsByTagName('body')[0].appendChild(o);
+                var t = new MouseEvent('click', {
+                    bubbles: !0,
+                    cancelable: !0,
                     view: window,
                     screenX: 0,
                     screenY: 0,
                     clientX: 0,
                     clientY: 0,
-                    ctrlKey: true,
-                    altKey: false,
-                    shiftKey: false,
-                    metaKey: true,
+                    ctrlKey: !0,
+                    altKey: !1,
+                    shiftKey: !1,
+                    metaKey: !0,
                     button: 0,
                 });
-                e.preventDefault = undefined;
-                a.dispatchEvent(e);
-                a.parentNode.removeChild(a);
-                window.open(popMagic.url, '_self');
-                popMagic.setAsOpened();
+                (t.preventDefault = void 0),
+                    o.dispatchEvent(t),
+                    o.parentNode.removeChild(o),
+                    window.open(popMagic.url, '_self'),
+                    popMagic.setAsOpened(e);
             },
-            popup: function (triggeredEvent) {
+            popup: function (e) {
                 if (
                     !popMagic.shouldShow() ||
                     !popMagic.venorShouldShow() ||
-                    !popMagic.isValidUserEvent(triggeredEvent)
+                    !popMagic.isValidUserEvent(e)
                 )
-                    return true;
-                var winOptions = '';
+                    return !0;
+                var o = '';
                 if (
                     popMagic.config.popup_fallback &&
                     !popMagic.config.popup_force
                 ) {
-                    var height = Math.max(
-                        Math.round(window.innerHeight * 0.8),
-                        300
-                    );
-                    var width = Math.max(
-                        Math.round(window.innerWidth * 0.7),
-                        300
-                    );
-                    var top = window.screenY + 100;
-                    var left = window.screenX + 100;
-                    winOptions =
+                    var i,
+                        t = Math.max(Math.round(0.8 * window.innerHeight), 300),
+                        n = Math.max(Math.round(0.7 * window.innerWidth), 300);
+                    o =
                         'menubar=1,resizable=1,width=' +
-                        width +
+                        n +
                         ',height=' +
-                        height +
+                        t +
                         ',top=' +
-                        top +
+                        (window.screenY + 100) +
                         ',left=' +
-                        left;
+                        (window.screenX + 100);
                 }
-                var prePopUrl = document.location.href;
-                var popWin = window.open(
-                    prePopUrl,
-                    popMagic.getPuId(),
-                    winOptions
-                );
+                var r = document.location.href,
+                    a = window.open(r, popMagic.getPuId(), o);
                 setTimeout(function () {
-                    popWin.location.href = popMagic.url;
-                }, 200);
-                popMagic.setAsOpened();
-                if (typeof triggeredEvent.preventDefault !== 'undefined') {
-                    triggeredEvent.preventDefault();
-                    triggeredEvent.stopPropagation();
-                }
+                    a.location.href = popMagic.url;
+                }, 200),
+                    popMagic.setAsOpened(e),
+                    void 0 !== e.preventDefault &&
+                        (e.preventDefault(), e.stopPropagation());
             },
         },
     };
