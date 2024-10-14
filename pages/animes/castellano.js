@@ -8,37 +8,13 @@ import Layout from '../../components/Layout';
 import styles from '../../styles/Animes.module.css';
 import { decryptString } from '../../helpers/encryptDecrypt';
 
-const Index = ({ data, error }) => {
-    if (error) {
-        return (
-            <Layout>
-                <Head>
-                    <title>Error - {process.env.NAME}</title>
-                </Head>
-                <main className={styles.container}>
-                    <h1>Error al cargar los datos</h1>
-                    <p>{error}</p>
-                </main>
-            </Layout>
-        );
-    }
+const Index = ({ data }) => {
+    const [castellanos, setCastellanos] = useState([]);
 
-    let animeData;
-    try {
-        animeData = JSON.parse(decryptString(data));
-    } catch (decryptError) {
-        return (
-            <Layout>
-                <Head>
-                    <title>Error - {process.env.NAME}</title>
-                </Head>
-                <main className={styles.container}>
-                    <h1>Error al descifrar los datos</h1>
-                    <p>{decryptError.message}</p>
-                </main>
-            </Layout>
-        );
-    }
+    useEffect(() => {
+        const decryptedData = decryptString(data);
+        setCastellanos(JSON.parse(decryptedData));
+    }, [data]);
 
     const router = useRouter();
     const [perPage] = useState(28);
@@ -55,7 +31,7 @@ const Index = ({ data, error }) => {
 
     const paginationAnimes = () => (
         <div className={styles.paginate}>
-            {animeData[(page - 1) * perPage - 1] && (
+            {data[(page - 1) * perPage - 1] && (
                 <a className={styles.item} onClick={() => changePage('prev')}>
                     <svg viewBox="0 0 24 24">
                         <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"></path>
@@ -63,7 +39,7 @@ const Index = ({ data, error }) => {
                 </a>
             )}
             <a className={`${styles.item} ${styles.active}`}>{page}</a>
-            {animeData[page * perPage + 1] && (
+            {data[page * perPage + 1] && (
                 <a className={styles.item} onClick={() => changePage('next')}>
                     <svg viewBox="0 0 24 24">
                         <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"></path>
@@ -111,46 +87,27 @@ const Index = ({ data, error }) => {
                 />
             </Head>
             <main className={styles.container}>
-                {JSON.stringify(animeData)}
-                {Object.keys(animeData).length === 0 ? (
-                    <div style={{ 'margin-top': '5rem' }}>
-                        <h1>No hay animes disponibles</h1>
-                    </div>
-                ) : (
-                    <ListAnimes
-                        title={'Animes en Castellano'}
-                        animes={
-                            animeData &&
-                            animeData.slice(
-                                (page - 1) * perPage,
-                                page * perPage
-                            )
-                        }
-                        paginate={paginationAnimes()}
-                    />
-                )}
+                <ListAnimes
+                    title={'Animes en Castellano'}
+                    animes={castellanos?.slice(
+                        (page - 1) * perPage,
+                        page * perPage
+                    )}
+                    paginate={paginationAnimes()}
+                />
             </main>
         </Layout>
     );
 };
 
 export async function getStaticProps() {
-    try {
-        const data = await fetchData(`anime/castellano`);
-        console.log(data);
-        return {
-            props: {
-                data: data,
-            },
-            revalidate: 1,
-        };
-    } catch (error) {
-        return {
-            props: {
-                error: 'Error al conectar con la API.',
-            },
-        };
-    }
+    const data = await fetchData(`anime/castellano`);
+    return {
+        props: {
+            data: data,
+        },
+        revalidate: 1,
+    };
 }
 
 export default Index;
